@@ -4,7 +4,7 @@
 const $ = (s) => document.querySelector(s);
 const PAGE = 30;
 const LEVELS = ["Werkstudent", "Internship", "Thesis", "Student side job", "Junior / Trainee"];
-const GERMAN = [0, 1, 2];
+const SPEAK = ["en", "both", "de"];  // working language: only English / English and German / only German
 const MODES = ["Remote", "Hybrid", "Onsite", "Not stated"];
 const POSTED = ["", "1", "7", "30"];
 // display names (data values stay English)
@@ -22,7 +22,7 @@ let JOBS = [];
 let shown = PAGE;
 const saved = new Set(store.get("hsj-saved", []));
 const state = {
-  q: "", english: false, levels: new Set(), german: new Set(), fields: new Set(), modes: new Set(),
+  q: "", english: false, levels: new Set(), speak: new Set(), fields: new Set(), modes: new Set(),
   posted: "", hideMandatory: false, savedOnly: false, sort: "new",
   skills: store.get("hsj-skills", []),
 };
@@ -42,6 +42,16 @@ function germanNeed(j) {
   }
   return j.german === "required" ? 2 : j.german === "a plus" ? 1 : 0;
 }
+// Which languages the job is done in, from the German need plus whether English is asked for.
+function speakOf(j) {
+  const need = germanNeed(j);
+  const english = j.ai ? !["none", "not stated"].includes(j.english_level) || j.lang === "EN"
+    : j.lang === "EN" || (j.english && j.english !== "not mentioned");
+  if (need === 0) return "en";
+  if (need === 1) return "both";
+  return english ? "both" : "de";
+}
+const SPEAK_CLASS = { en: "l0", both: "l1", de: "l2" };
 function germanText(j) {
   const n = germanNeed(j);
   if (j.ai) {
@@ -95,7 +105,7 @@ function passes(j, skip) {
   }
   if (state.english && germanNeed(j) === 2) return false;
   if (skip !== "levels" && state.levels.size && !state.levels.has(j.level)) return false;
-  if (skip !== "german" && state.german.size && !state.german.has(germanNeed(j))) return false;
+  if (skip !== "speak" && state.speak.size && !state.speak.has(speakOf(j))) return false;
   if (skip !== "fields" && state.fields.size && !state.fields.has(j.field)) return false;
   if (skip !== "modes" && state.modes.size && !state.modes.has(modeOf(j))) return false;
   if (skip !== "posted" && state.posted && daysAgo(j.posted) > Number(state.posted) - (state.posted === "1" ? 1 : 0)) return false;
@@ -135,11 +145,11 @@ function renderFilters() {
   const lv = $("#f-level"); lv.replaceChildren(...LEVELS.map((l) =>
     chip(levelName(l), state.levels.has(l), () => { toggle(state.levels, l); update(); }, countWhere("levels", (j) => j.level === l))));
 
-  const gm = $("#f-german"); gm.replaceChildren(...GERMAN.map((g) => {
-    const n = countWhere("german", (j) => germanNeed(j) === g);
+  const sp = $("#f-speak"); sp.replaceChildren(...SPEAK.map((g) => {
+    const n = countWhere("speak", (j) => speakOf(j) === g);
     return el("label", { class: "opt" + (n ? "" : " zero") },
-      el("input", { type: "checkbox", checked: state.german.has(g), onchange: () => { toggle(state.german, g); update(); } }),
-      el("span", { class: `lang-pill l${g}` }, t(`german.${g}`)), el("span", { class: "n" }, num(n)));
+      el("input", { type: "checkbox", checked: state.speak.has(g), onchange: () => { toggle(state.speak, g); update(); } }),
+      el("span", { class: `lang-pill ${SPEAK_CLASS[g]}` }, t(`speak.${g}`)), el("span", { class: "n" }, num(n)));
   }));
 
   const fields = [...new Set(JOBS.map((j) => j.field))]
@@ -171,7 +181,7 @@ function activeChips() {
   if (state.q) add(t("chip.search", { q: state.q }), () => { state.q = ""; $("#q").value = ""; });
   if (state.english) add(t("english.switch"), () => { state.english = false; });
   state.levels.forEach((l) => add(levelName(l), () => state.levels.delete(l)));
-  state.german.forEach((g) => add(t("chip.german", { l: t(`german.${g}`) }), () => state.german.delete(g)));
+  state.speak.forEach((g) => add(t(`speak.${g}`), () => state.speak.delete(g)));
   state.fields.forEach((f) => add(fieldName(f), () => state.fields.delete(f)));
   state.modes.forEach((m) => add(modeName(m), () => state.modes.delete(m)));
   if (state.posted) add(t("chip.posted", { l: t(`posted.${state.posted}`) }), () => { state.posted = ""; });
@@ -197,7 +207,7 @@ function card(j) {
   const badges = [
     daysAgo(j.first_seen) <= 1 && daysAgo(j.posted) <= 3 ? el("span", { class: "badge new" }, t("badge.new")) : null,
     el("span", { class: "badge level" }, levelName(j.level)),
-    el("span", { class: `lang-pill l${need}` }, germanText(j)),
+    el("span", { class: `lang-pill ${SPEAK_CLASS[speakOf(j)]}`, title: germanText(j) }, t(`speak.${speakOf(j)}`)),
     el("span", { class: "badge" }, fieldName(j.field)),
     j.work_mode ? el("span", { class: "badge" }, modeName(j.work_mode)) : null,
     j.mandatory ? el("span", { class: "badge warn", title: t("badge.mandatoryTitle") }, t("badge.mandatory")) : null,
@@ -254,7 +264,7 @@ function writeURL() {
   if (state.q) p.set("q", state.q);
   if (state.english) p.set("en", "1");
   if (state.levels.size) p.set("type", [...state.levels].join(","));
-  if (state.german.size) p.set("de", [...state.german].join(","));
+  if (state.speak.size) p.set("speak", [...state.speak].join(","));
   if (state.fields.size) p.set("field", [...state.fields].join(","));
   if (state.modes.size) p.set("mode", [...state.modes].join(","));
   if (state.posted) p.set("days", state.posted);
@@ -269,7 +279,7 @@ function readURL() {
   state.q = p.get("q") || "";
   state.english = p.get("en") === "1";
   state.levels = new Set(list("type").filter((l) => LEVELS.includes(l)));
-  state.german = new Set(list("de").map(Number).filter((n) => [0, 1, 2].includes(n)));
+  state.speak = new Set(list("speak").filter((s) => SPEAK.includes(s)));
   state.fields = new Set(list("field"));
   state.modes = new Set(list("mode").filter((m) => MODES.includes(m)));
   state.posted = ["1", "7", "30"].includes(p.get("days")) ? p.get("days") : "";
@@ -304,7 +314,7 @@ function wire() {
   $("#skillInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } });
 
   const reset = () => {
-    Object.assign(state, { q: "", english: false, levels: new Set(), german: new Set(), fields: new Set(), modes: new Set(),
+    Object.assign(state, { q: "", english: false, levels: new Set(), speak: new Set(), fields: new Set(), modes: new Set(),
       posted: "", hideMandatory: false, savedOnly: false });
     $("#q").value = ""; $("#englishOnly").checked = false; $("#hideMandatory").checked = false; $("#savedOnly").checked = false;
     update();

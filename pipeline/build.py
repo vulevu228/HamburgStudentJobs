@@ -103,7 +103,8 @@ def describe(job, level, today):
         "id": job.id, "title": job.title.strip(), "company": job.company.strip(), "location": job.location[:80],
         "url": job.url, "source": job.source, "posted": job.posted or today, "first_seen": today, "last_seen": today,
         "level": level, "field": extract.field_of(job.title), "lang": lang,
-        "german": extract.german_of(text, lang), "work_mode": job.work_mode or d["work_mode"],
+        "german": extract.german_of(text, lang), "english": extract.english_of(text, lang),
+        "work_mode": job.work_mode or d["work_mode"],
         "hours": d["hours"], "start": d["start"] or feed.get("start", ""), "duration": d["duration"] or feed.get("duration", ""),
         "pay": job.salary or d["pay"], "mandatory": d["mandatory"], "skills": extract.skills_in(text),
     }
@@ -184,6 +185,8 @@ def main():
     # older postings the AI never described (key added later, or an earlier call failed) get another try
     retry = [(j, l) for j, l in still if not known[j.id].get("ai") and in_scope(known[j.id])]
     retry = retry[:max(0, args.max_ai - len(fresh))] if use_ai else []
+    # one-time backfill: records saved before English detection existed get their ad re-read once
+    backfill = [(j, l) for j, l in still if "english" not in known[j.id] and (j, l) not in retry]
 
     def fetch(item):
         job, _ = item
@@ -193,7 +196,11 @@ def main():
             except Exception as e:
                 failed.append(f"description {job.id}: {e}")
     with ThreadPoolExecutor(8) as ex:
-        list(ex.map(fetch, fresh + retry))
+        list(ex.map(fetch, fresh + retry + backfill))
+    for job, _ in backfill:
+        if job.description:
+            rec = known[job.id]
+            rec["english"] = extract.english_of(job.title + "\n" + job.description, extract.language_of(job.description))
     new_recs = {job.id: {**describe(job, level, today), "copies": copies(job)} for job, level in fresh}
     texts = {job.id: job.description for job, _ in fresh + retry}
 
@@ -227,6 +234,9 @@ def main():
     jobs = sorted((r for r in known.values() if alive(r)), key=lambda r: (r["posted"], r["id"]), reverse=True)
     # Adzuna copies of an ad we also have from a fuller source (saved before the long-title rule existed,
     # or fetched on a day the other source was down) are dropped at publish time
+    for r in jobs:  # older Adzuna records can't be re-read (fetched incrementally): judge by the ad's language
+        if r["source"] == "Adzuna" and "english" not in r:
+            r["english"] = "required" if r["lang"] == "EN" else "not mentioned"
     fuller = {norm(r["title"]) for r in jobs if r["source"] != "Adzuna" and len(norm(r["title"])) >= 28}
     jobs = [r for r in jobs if not (r["source"] == "Adzuna" and norm(r["title"]) in fuller)]
 

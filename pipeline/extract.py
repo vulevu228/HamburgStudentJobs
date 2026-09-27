@@ -61,6 +61,18 @@ def german_of(text, lang):
     return "not mentioned"
 
 
+ENGLISH_ASKED = (r"(?:englisch\w*|english)"  # the word itself, then a sign it is a requirement, in either order
+                 r"(?=[^.\n]{0,60}(kenntnis|sprach|fließend|verhandlungssicher|wort und schrift|c1|c2|b2|fluent|proficien|skills|level|required|plus|vorteil|wünschenswert))"
+                 r"|(kenntnis\w*|fließend\w*|verhandlungssicher\w*|fluent|proficien\w*|good|excellent|very good|sehr gut\w*|gut\w*)[^.\n]{0,30}(englisch|english)")
+
+
+def english_of(text, lang):
+    """Does the ad ask for English? An ad written in English implies it."""
+    if lang == "EN":
+        return "required"
+    return "asked" if re.search(ENGLISH_ASKED, text, I) else "not mentioned"
+
+
 MONTHS = r"jan\w*|feb\w*|m[aä]r\w*|apr\w*|ma[iy]|jun\w*|jul\w*|aug\w*|sep\w*|o[ck]t\w*|nov\w*|de[cz]\w*"
 
 
