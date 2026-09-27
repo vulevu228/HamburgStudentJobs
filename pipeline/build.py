@@ -25,6 +25,7 @@ from ai import Enricher
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "data" / "jobs.json"
 GRACE_DAYS = 3
+BUDGETS = {}  # rate-limited sources report their call count in the log
 I = re.IGNORECASE
 
 
@@ -46,6 +47,7 @@ def collect(known):
         # first run crawls up to the daily call budget; afterwards only ads from the last 3 days are needed
         first = not any(r["source"] == "Adzuna" for r in known.values())
         budget = sources.CallBudget(catalog.ADZUNA_DAILY_CALLS)
+        BUDGETS["Adzuna"] = budget
         tasks.append(("Adzuna", sources.src_adzuna, (catalog.ADZUNA_TERMS, catalog.CITY, catalog.RADIUS_KM, app_id, app_key,
                                                      budget, None if first else 3, 7 if first else 2)))
     else:
@@ -60,7 +62,8 @@ def collect(known):
                 got = f.result()
                 jobs += got
                 ok.add(name)
-                print(f"  {name:<16} {len(got):>5} postings")
+                calls = f"  ({BUDGETS[name].used} API calls)" if name in BUDGETS else ""
+                print(f"  {name:<16} {len(got):>5} postings{calls}")
             except Exception as e:
                 failed.append(f"{name}: {type(e).__name__}: {e}")
                 print(f"  {name:<16} FAILED ({type(e).__name__})")
@@ -138,7 +141,7 @@ def main():
     raw, ok_sources, failed = collect(known)
 
     # keep student-level postings in the area; one record per company+title
-    seen_keys, fresh, still = {}, [], []
+    seen_keys, title_owner, fresh, still = {}, {}, [], []
     # on duplicates keep the company's own ad (direct link), then Arbeitnow, then the job agency
     # (Adzuna last: it only returns a snippet of the ad)
     raw.sort(key=lambda j: {"Company Site": 0, "Arbeitnow": 1, "Arbeitsagentur": 2}.get(j.source, 3))
@@ -150,10 +153,17 @@ def main():
         # same ad often appears twice (job agency + company site, or two legal entities) or once per branch
         # (e.g. one Lidl ad per store): match on the first word of the company name plus the title
         key = company_key(job.company) + "|" + norm(job.title)
-        if key in seen_keys:
-            seen_keys[key][job.source] = seen_keys[key].get(job.source, 0) + 1
+        # a long, specific title is the same job even when sources spell the company differently
+        # ("HPA - Hamburg Port Authority" / "Hamburg Port Authority AÖR"); short generic titles are not merged
+        title_key = "title|" + norm(job.title) if len(norm(job.title)) >= 28 else None
+        dup = key if key in seen_keys else title_key if title_key in title_owner else None
+        if dup:
+            owner = seen_keys[dup] if dup == key else seen_keys[title_owner[title_key]]
+            owner[job.source] = owner.get(job.source, 0) + 1
             continue
         seen_keys[key] = {job.source: 1}
+        if title_key:
+            title_owner[title_key] = key
         job.extra["key"] = key
         (still if job.id in known else fresh).append((job, level))
 
@@ -215,6 +225,10 @@ def main():
         gone_days = (date.fromisoformat(today) - date.fromisoformat(r["last_seen"])).days
         return gone_days < GRACE_DAYS or not source_ok
     jobs = sorted((r for r in known.values() if alive(r)), key=lambda r: (r["posted"], r["id"]), reverse=True)
+    # Adzuna copies of an ad we also have from a fuller source (saved before the long-title rule existed,
+    # or fetched on a day the other source was down) are dropped at publish time
+    fuller = {norm(r["title"]) for r in jobs if r["source"] != "Adzuna" and len(norm(r["title"])) >= 28}
+    jobs = [r for r in jobs if not (r["source"] == "Adzuna" and norm(r["title"]) in fuller)]
 
     if not raw:
         sys.exit("every source failed - keeping the previous jobs.json")
