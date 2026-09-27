@@ -26,6 +26,13 @@ const state = {
   skills: store.get("hsj-skills", []),
 };
 
+// Anonymous usage counts (GoatCounter, no cookies). Only fixed paths/event names are sent - never the
+// query string, search text or skills. Silently does nothing if the counter is blocked.
+function track(path, event = false) {
+  const go = () => { try { window.goatcounter && window.goatcounter.count && window.goatcounter.count({ path, event }); } catch (e) { /* ignore */ } };
+  if (document.readyState === "complete") go(); else window.addEventListener("load", go, { once: true });
+}
+
 // ---------------------------------------------------------------- derived facts
 function germanNeed(j) {
   if (j.ai) {
@@ -161,7 +168,7 @@ function card(j) {
   const save = c.querySelector(".save");
   const setSave = () => { const on = saved.has(j.id); save.setAttribute("aria-pressed", String(on)); save.title = on ? "Remove from saved" : "Save this job"; };
   setSave();
-  save.addEventListener("click", () => { toggle(saved, j.id); store.set("hsj-saved", [...saved]); setSave(); renderFilters(); if (state.savedOnly) update(); });
+  save.addEventListener("click", () => { if (!saved.has(j.id)) track("save-job", true); toggle(saved, j.id); store.set("hsj-saved", [...saved]); setSave(); renderFilters(); if (state.savedOnly) update(); });
 
   const need = germanNeed(j);
   const badges = [
@@ -185,6 +192,8 @@ function card(j) {
   if (hits.size) facts.unshift(`Matches ${hits.size} of your skill${hits.size > 1 ? "s" : ""}`);
   c.querySelector(".facts").textContent = facts.join(" · ");
   const view = c.querySelector(".view"); view.href = j.url;
+  const opened = () => track("open-ad", true);
+  view.addEventListener("click", opened); a.addEventListener("click", opened);
   view.setAttribute("aria-label", `View the original ad for ${j.title} (opens in a new tab)`);
   view.firstChild.textContent = j.source === "Arbeitsagentur" ? "View on Arbeitsagentur " : "View on company site ";
   return c;
@@ -318,4 +327,5 @@ async function main() {
     $("#resultCount").textContent = "Could not load the job list. Please try again in a moment.";
   }
 }
+track("/");
 main();

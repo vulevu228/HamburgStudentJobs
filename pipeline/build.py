@@ -2,6 +2,7 @@
 
     python pipeline/build.py                 # full run (AI step only if ANTHROPIC_API_KEY is set)
     python pipeline/build.py --max-ai 50     # cap AI calls this run (default 400)
+    python pipeline/build.py --ai-scope all  # AI for every new ad, not only English-friendly ones
     python pipeline/build.py --no-ai
 
 jobs.json is both the published data and the pipeline's memory: postings already in it keep
@@ -102,6 +103,8 @@ def apply_ai(rec, facts):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--max-ai", type=int, default=400)
+    ap.add_argument("--ai-scope", choices=["english", "all"], default="english",
+                    help="english: only ads not already German-required (~2-3 a day); all: every new ad (~30 a day)")
     ap.add_argument("--no-ai", action="store_true")
     args = ap.parse_args()
     today = date.today().isoformat()
@@ -134,8 +137,13 @@ def main():
 
     enricher = Enricher()
     use_ai = enricher.enabled and not args.no_ai
+
+    def in_scope(rec):
+        # "english": only ads the rules don't already mark as German-required - the ones this board is for
+        return args.ai_scope == "all" or rec["german"] != "required"
     # older postings the AI never described (key added later, or an earlier call failed) get another try
-    retry = [(j, l) for j, l in still if not known[j.id].get("ai")][:max(0, args.max_ai - len(fresh))] if use_ai else []
+    retry = [(j, l) for j, l in still if not known[j.id].get("ai") and in_scope(known[j.id])]
+    retry = retry[:max(0, args.max_ai - len(fresh))] if use_ai else []
 
     def fetch(item):
         job, _ = item
@@ -151,7 +159,7 @@ def main():
 
     # AI: new postings first, then the retries
     if use_ai:
-        todo = [r for r in new_recs.values() if texts[r["id"]]] + [known[j.id] for j, _ in retry if texts[j.id]]
+        todo = [r for r in new_recs.values() if texts[r["id"]] and in_scope(r)] + [known[j.id] for j, _ in retry if texts[j.id]]
         todo = todo[:args.max_ai]
 
         def run(rec):

@@ -18,6 +18,8 @@ so you can filter to the jobs where English is enough.
 - Hide internships that only accept students doing a mandatory internship (Pflichtpraktikum).
 - Save jobs; saved jobs and skills stay in your browser only.
 - Every filter is kept in the URL, so a search can be shared as a link.
+- Visits are counted anonymously with [GoatCounter](https://www.goatcounter.com) (no cookies; only the page
+  and the events "open ad" / "save job" are sent, never search terms or skills).
 
 ## How it works
 
@@ -31,11 +33,12 @@ GitHub Actions (daily, 04:30 UTC)
     │               (structured output, each new ad read once)
     └─ docs/data/jobs.json   published data, also the pipeline's memory between runs
   ▼
-GitHub Pages: docs/index.html + app.js filter jobs.json in the browser (no server, no tracking)
+GitHub Pages: docs/index.html + app.js filter jobs.json in the browser (no server, no cookies)
 ```
 
-- **Only new ads cost anything.** Postings already in `jobs.json` keep their facts and are not re-read.
-  At roughly 30 new ads a day the AI step costs about $3 a month; `--max-ai` caps each run.
+- **Only new ads cost anything, and by default only the ones this board is for.** The AI reads an ad once,
+  and only if the rules have not already marked it German-required (about 2-3 new ads a day, well under
+  $1 a month). `--ai-scope all` describes every new ad (~30 a day, ~$3 a month); `--max-ai` caps each run.
 - **The AI step is optional.** Without an `ANTHROPIC_API_KEY` the rule-based facts are published on their own.
 - **Ads that disappear** from their source are removed after 3 days, and only if that source answered
   that day, so one failing source does not empty the board.
