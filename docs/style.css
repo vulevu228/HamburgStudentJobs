@@ -260,5 +260,5 @@ dialog h2 { margin-top: 0; }
 /* Adzuna attribution (required by their API terms): at least 116x23 px */
 .attrib { display: inline-flex; align-items: center; gap: 4px; min-height: 23px; min-width: 116px; font-size: 13px; color: var(--ink-3); }
 .attrib a { color: var(--ink-2); display: inline-flex; align-items: center; }
-.attrib img { height: 23px; width: auto; display: block; }
+.attrib img { height: 40px; width: auto; display: block; } /* stacked logo: 40px keeps the wordmark readable */
 .adzuna-word { color: #2e6ca8; font-size: 16px; letter-spacing: -.01em; }

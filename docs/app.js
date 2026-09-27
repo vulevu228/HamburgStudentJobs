@@ -215,7 +215,7 @@ function card(j) {
 
 // Adzuna's terms: each Adzuna ad carries "Jobs by <Adzuna logo>", both linking to the local Adzuna site
 function adzunaLabel() {
-  const logo = el("img", { src: "adzuna-logo.png", alt: "Adzuna", height: "23" });
+  const logo = el("img", { src: "adzuna-logo.png", alt: "Adzuna", height: "40" });
   logo.addEventListener("error", () => logo.replaceWith(el("strong", { class: "adzuna-word" }, "Adzuna")), { once: true });
   return el("span", { class: "attrib" },
     el("a", { href: "https://www.adzuna.de", target: "_blank", rel: "noopener" }, "Jobs"), " by ",
