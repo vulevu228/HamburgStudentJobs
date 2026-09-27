@@ -30,6 +30,8 @@ jobs:
       - name: Collect and describe jobs
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
         run: python pipeline/build.py --max-ai "${{ github.event.inputs.max_ai || '400' }}"
       - name: Commit updated data
         run: |

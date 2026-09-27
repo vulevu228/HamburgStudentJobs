@@ -10,6 +10,7 @@ their extracted facts and are not re-fetched; postings that stop appearing are d
 GRACE_DAYS (so one failed source doesn't wipe its jobs off the board)."""
 import argparse
 import json
+import os
 import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -27,9 +28,28 @@ GRACE_DAYS = 3
 I = re.IGNORECASE
 
 
-def collect():
+def load_dotenv():
+    """Local runs only: read KEY=value lines from a git-ignored .env next to the repo root."""
+    env = ROOT / ".env"
+    if env.exists():
+        for line in env.read_text(encoding="utf-8").splitlines():
+            k, sep, v = line.partition("=")
+            if sep and k.strip() and not k.lstrip().startswith("#"):
+                os.environ.setdefault(k.strip(), v.strip().strip('"'))
+
+
+def collect(known):
     tasks = [("Arbeitsagentur", sources.src_arbeitsagentur, (catalog.BA_TERMS, catalog.CITY, catalog.RADIUS_KM)),
              ("Arbeitnow", sources.src_arbeitnow, (catalog.CITY,))]
+    app_id, app_key = os.environ.get("ADZUNA_APP_ID"), os.environ.get("ADZUNA_APP_KEY")
+    if app_id and app_key:
+        # first run crawls up to the daily call budget; afterwards only ads from the last 3 days are needed
+        first = not any(r["source"] == "Adzuna" for r in known.values())
+        budget = sources.CallBudget(catalog.ADZUNA_DAILY_CALLS)
+        tasks.append(("Adzuna", sources.src_adzuna, (catalog.ADZUNA_TERMS, catalog.CITY, catalog.RADIUS_KM, app_id, app_key,
+                                                     budget, None if first else 3, 7 if first else 2)))
+    else:
+        print("  Adzuna           skipped (no ADZUNA_APP_ID / ADZUNA_APP_KEY)")
     for ats, slug, name in catalog.COMPANIES:
         tasks.append((name, sources.ATS[ats], (slug, name, catalog.CITY) if ats == "workday" else (slug, name)))
     jobs, ok, failed = [], set(), []
@@ -49,7 +69,7 @@ def collect():
 
 def in_area(job):
     # the Arbeitsagentur search is already radius-limited; company feeds list every office worldwide
-    return job.source in ("Arbeitsagentur", "Arbeitnow") or re.search(
+    return job.source in ("Arbeitsagentur", "Arbeitnow", "Adzuna") or re.search(
         r"hamburg|remote.*(germany|deutschland|dach)|germany.*remote|deutschlandweit", job.location, I)
 
 
@@ -108,18 +128,20 @@ def main():
                     help="english: only ads not already German-required (~2-3 a day); all: every new ad (~30 a day)")
     ap.add_argument("--no-ai", action="store_true")
     args = ap.parse_args()
+    load_dotenv()
     today = date.today().isoformat()
 
     old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {"jobs": []}
     known = {j["id"]: j for j in old["jobs"]}
 
     print(f"{datetime.now():%Y-%m-%d %H:%M} collecting")
-    raw, ok_sources, failed = collect()
+    raw, ok_sources, failed = collect(known)
 
     # keep student-level postings in the area; one record per company+title
     seen_keys, fresh, still = {}, [], []
     # on duplicates keep the company's own ad (direct link), then Arbeitnow, then the job agency
-    raw.sort(key=lambda j: {"Company Site": 0, "Arbeitnow": 1}.get(j.source, 2))
+    # (Adzuna last: it only returns a snippet of the ad)
+    raw.sort(key=lambda j: {"Company Site": 0, "Arbeitnow": 1, "Arbeitsagentur": 2}.get(j.source, 3))
     for job in raw:
         level = extract.level_of(job.title, job.level_hint)
         if not level or not in_area(job):
@@ -187,6 +209,8 @@ def main():
     def alive(r):
         if r.get("student_job") is False:
             return False
+        if r["source"] == "Adzuna":  # fetched incrementally, not re-seen daily: expire by age instead
+            return (date.fromisoformat(today) - date.fromisoformat(r["posted"])).days <= catalog.ADZUNA_KEEP_DAYS
         source_ok = r["source"] in ok_sources if r["source"] in ("Arbeitsagentur", "Arbeitnow") else r["company"] in ok_sources
         gone_days = (date.fromisoformat(today) - date.fromisoformat(r["last_seen"])).days
         return gone_days < GRACE_DAYS or not source_ok

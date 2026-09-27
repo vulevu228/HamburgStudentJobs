@@ -45,6 +45,12 @@ COMPANIES = [
     ("personio", "hvv", "hvv"),
 ]
 
+# Adzuna (free plan: 250 calls/day, 2,500/month) - fewer, broader terms; each call returns up to 50 ads
+ADZUNA_TERMS = ["werkstudent", "working student", "praktikum", "internship", "abschlussarbeit",
+                "masterarbeit", "bachelorarbeit", "trainee", "studentenjob", "junior"]
+ADZUNA_DAILY_CALLS = 70     # first run: full crawl within this; later runs only need ~10
+ADZUNA_KEEP_DAYS = 45       # Adzuna ads are not re-checked daily, so they expire by age
+
 LEVELS = ["Werkstudent", "Internship", "Thesis", "Student side job", "Junior / Trainee"]
 
 FIELDS = [

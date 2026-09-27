@@ -231,6 +231,54 @@ def src_arbeitnow(city, max_pages=60):
     return out
 
 
+class CallBudget:
+    """Adzuna's free plan: 25 calls/min, 250/day, 2,500/month. Every call goes through here."""
+    def __init__(self, limit):
+        self.limit, self.used = limit, 0
+
+    def take(self):
+        if self.used >= self.limit:
+            return False
+        self.used += 1
+        return True
+
+
+def src_adzuna(terms, city, radius_km, app_id, app_key, budget, max_days_old=None, max_pages=5):
+    """Adzuna job search (Germany). Only a ~500-character description snippet comes back.
+    The first run crawls everything within `budget`; later runs pass max_days_old to fetch only new ads."""
+    out, seen = [], set()
+    for term in terms:
+        page = 1
+        while page <= max_pages and budget.take():
+            params = {"app_id": app_id, "app_key": app_key, "what": term, "where": city, "distance": radius_km,
+                      "results_per_page": 50, "sort_by": "date", "content-type": "application/json"}
+            if max_days_old:
+                params["max_days_old"] = max_days_old
+            r = requests.get(f"https://api.adzuna.com/v1/api/jobs/de/search/{page}", params=params, headers=UA, timeout=30)
+            if r.status_code in (401, 403):
+                raise RuntimeError(f"Adzuna rejected the credentials (HTTP {r.status_code})")
+            r.raise_for_status()
+            results = r.json().get("results", [])
+            for j in results:
+                jid = str(j["id"])
+                if jid in seen:
+                    continue
+                seen.add(jid)
+                sal = ""
+                if j.get("salary_min") and str(j.get("salary_is_predicted")) != "1":  # predicted salaries need extra labelling
+                    lo, hi = j["salary_min"], j.get("salary_max") or j["salary_min"]
+                    sal = f"{lo:,.0f}-{hi:,.0f} EUR/yr" if lo > 1000 else f"{lo:g}-{hi:g} EUR/h"
+                out.append(Job(f"adzuna:{jid}", (j.get("company") or {}).get("display_name", ""), strip_html(j.get("title", "")),
+                               (j.get("location") or {}).get("display_name", city), j["redirect_url"], "Adzuna",
+                               salary=sal, level_hint=j.get("contract_time") or "",
+                               description=strip_html(j.get("description", "")), posted=(j.get("created") or "")[:10]))
+            time.sleep(2.6)  # stay under 25 calls per minute
+            if len(results) < 50:
+                break
+            page += 1
+    return out
+
+
 ATS = {"greenhouse": src_greenhouse, "lever": src_lever, "ashby": src_ashby,
        "smartrecruiters": src_smartrecruiters, "personio": src_personio, "workday": src_workday}
 

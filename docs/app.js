@@ -209,7 +209,17 @@ function card(j) {
   view.addEventListener("click", opened); a.addEventListener("click", opened);
   view.setAttribute("aria-label", `View the original ad for ${j.title} (opens in a new tab)`);
   view.firstChild.textContent = j.source === "Company Site" ? "View on company site " : `View on ${j.source} `;
+  if (j.source === "Adzuna") c.querySelector(".card-foot").insertBefore(adzunaLabel(), view);
   return c;
+}
+
+// Adzuna's terms: each Adzuna ad carries "Jobs by <Adzuna logo>", both linking to the local Adzuna site
+function adzunaLabel() {
+  const logo = el("img", { src: "adzuna-logo.png", alt: "Adzuna", height: "23" });
+  logo.addEventListener("error", () => logo.replaceWith(el("strong", { class: "adzuna-word" }, "Adzuna")), { once: true });
+  return el("span", { class: "attrib" },
+    el("a", { href: "https://www.adzuna.de", target: "_blank", rel: "noopener" }, "Jobs"), " by ",
+    el("a", { href: "https://www.adzuna.de", target: "_blank", rel: "noopener" }, logo));
 }
 
 // ---------------------------------------------------------------- update cycle + URL state
