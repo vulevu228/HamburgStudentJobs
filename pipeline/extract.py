@@ -11,13 +11,23 @@ def level_of(title, hint=""):
     t = f"{title} {hint}"
     if re.search(NOT_STUDENT, title, I):
         return None
-    if re.search(r"werkstud|working student|student assistant|studentische|student job|studentjob|working_student|hiwi", t, I):
+    if re.search(r"werkstud|working student|student assistant|studentische|working_student|hiwi", t, I):
         return "Werkstudent"
     if re.search(r"thesis|abschlussarbeit|bachelorarbeit|masterarbeit", t, I):
         return "Thesis"
-    if re.search(r"intern(ship)?\b|internhsip|praktik|praktikum|PRAKTIKUM_TRAINEE", t, I):
+    internship = r"intern(ship)?\b|internhsip|praktik|praktikum|praxissemester"
+    if re.search(internship, title, I):
         return "Internship"
-    if re.search(r"junior|entry[- ]level|graduate|trainee|berufseinsteiger|absolvent|young professional", t, I):
+    if re.search(r"\bsenior\b|\blead\b|head of|principal|director|teamleit|leitung|leiter", title, I):
+        return None  # e.g. "Senior Student Recruiter", "Junior bis Senior"
+    # side jobs aimed at students (cafés, retail, events, tutoring...) - title must say so explicitly.
+    # Checked before the source's own type: the job agency files e.g. Lidl's "Studentenjob" as PRAKTIKUM_TRAINEE.
+    if re.search(r"studentenjob|studentjob|student job|jobs? für studierende|für studierende|\bstudent(\*in|in)?\b|aushilfe.{0,20}student|minijob.{0,20}student",
+                 title, I):
+        return "Student side job"
+    if re.search(internship + "|PRAKTIKUM_TRAINEE", hint, I):
+        return "Internship"
+    if re.search(r"junior|entry[- ]level|graduate|trainee|berufseinsteiger|absolvent|young professional|volont", t, I):
         return "Junior / Trainee"
     return None
 

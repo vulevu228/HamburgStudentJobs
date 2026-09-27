@@ -26,8 +26,8 @@ so you can filter to the jobs where English is enough.
 ```
 GitHub Actions (daily, 04:30 UTC)
   pipeline/build.py
-    ├─ sources.py   Bundesagentur für Arbeit job search API + career feeds of Hamburg employers
-    │               (Greenhouse, Lever, Ashby, SmartRecruiters, Personio, Workday)
+    ├─ sources.py   Bundesagentur für Arbeit job search API, Arbeitnow API, and the career feeds of
+    │               28 Hamburg employers (Greenhouse, Lever, Ashby, SmartRecruiters, Personio, Workday)
     ├─ extract.py   rules: job type, field, ad language, German requirement, skills, hours, pay…
     ├─ ai.py        Claude Haiku 4.5: English summary, key requirements, German/English level
     │               (structured output, each new ad read once)
@@ -42,8 +42,9 @@ GitHub Pages: docs/index.html + app.js filter jobs.json in the browser (no serve
 - **The AI step is optional.** Without an `ANTHROPIC_API_KEY` the rule-based facts are published on their own.
 - **Ads that disappear** from their source are removed after 3 days, and only if that source answered
   that day, so one failing source does not empty the board.
-- **Duplicates** (the same ad on the job agency and the company's own site) are merged, keeping the
-  company's direct link.
+- **Duplicates** (the same ad on the job agency and the company's own site, or one ad per branch such as
+  a supermarket's 50 stores) are merged into one card, keeping the company's direct link and showing
+  "open at N locations".
 - The site shows the title, company, extracted facts and a link to the original ad; the ad text itself
   is not republished.
 
@@ -57,10 +58,12 @@ python -m http.server -d docs 8000          # open http://localhost:8000
 ```
 
 To add an employer, add its career feed to `COMPANIES` in `pipeline/catalog.py`.
+The link-preview image `docs/og.png` is rendered from `assets/og.html` (1200×630 screenshot).
 
 ## Data sources
 
 - [Bundesagentur für Arbeit, Jobsuche API](https://jobsuche.api.bund.dev/)
+- [Arbeitnow job board API](https://www.arbeitnow.com/blog/job-board-api)
 - Public job feeds of the employers listed in `pipeline/catalog.py`
 
 AI summaries and language levels can be wrong. Always read the original ad before applying.

@@ -9,6 +9,7 @@ BA_TERMS = [
     "Praktikum", "Praktikant", "Internship", "Intern", "Pflichtpraktikum",
     "Abschlussarbeit", "Bachelorarbeit", "Masterarbeit", "Thesis",
     "Trainee", "Junior", "Berufseinsteiger", "Graduate",
+    "Student", "Studentenjob", "Studierende", "Praxissemester", "Volontariat", "Absolvent",
 ]
 
 # company career feeds with Hamburg postings: (ats, slug, display name)
@@ -32,9 +33,19 @@ COMPANIES = [
     ("personio", "bigpoint", "Bigpoint"),
     ("workday", "ag|wd3|Airbus", "Airbus"),
     ("workday", "unilever|wd3|Unilever_Experienced_Professionals", "Unilever"),
+    # added 2026-09-27 after probing ~200 Hamburg employers across 7 ATS systems
+    ("ashby", "adjoe", "adjoe"),
+    ("personio", "metergrid", "metergrid"),
+    ("personio", "snocks", "SNOCKS"),
+    ("personio", "closed", "CLOSED"),
+    ("greenhouse", "ogilvy", "Ogilvy"),
+    ("personio", "infiniteroots", "infinite roots"),
+    ("personio", "lemundo", "Lemundo"),
+    ("personio", "natsana", "Natsana"),
+    ("personio", "hvv", "hvv"),
 ]
 
-LEVELS = ["Werkstudent", "Internship", "Thesis", "Junior / Trainee"]
+LEVELS = ["Werkstudent", "Internship", "Thesis", "Student side job", "Junior / Trainee"]
 
 FIELDS = [
     "Data & Analytics", "Software & IT", "Engineering", "Marketing & Communications", "Sales & Business Development",

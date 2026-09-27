@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+.hero-art { width: 100%; height: auto; display: block; margin-bottom: 16px; }
+.hero-art .line { fill: none; stroke: var(--art-line); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.hero-art .thin { stroke-width: 1.2; opacity: .6; }
+.hero-art .glass { fill: var(--art-glass); }
+.hero-art .brick { fill: var(--art-brick); stroke: var(--art-line); stroke-width: 2.2; }
+.hero-art .box { stroke: var(--art-line); stroke-width: 1.6; }
+.hero-art .c1 { fill: var(--box1); } .hero-art .c2 { fill: var(--box2); } .hero-art .c3 { fill: var(--box3); }
+.hero-art .sun { fill: var(--art-sun); }
+.hero-art .cloud { fill: none; stroke: var(--art-line); stroke-width: 2; stroke-linecap: round; opacity: .35; }
+.hero-art .water { fill: none; stroke: var(--art-water); stroke-width: 2.2; stroke-linecap: round; }
+.hero-art .water.thin { opacity: .5; }
+:root{--art-line:#334155;--art-glass:#dbeafe;--art-brick:#e7c3b0;--art-sun:#fde68a;--art-water:#0f766e;--box1:#0f766e;--box2:#f59e0b;--box3:#e11d48;}
+body{margin:0;width:1200px;height:630px;font-family:"Segoe UI",system-ui,sans-serif;background:#ffffff;color:#111827;overflow:hidden}
+.wrap{position:relative;height:630px;box-sizing:border-box;padding:64px 72px;display:grid;grid-template-columns:1fr 440px;gap:24px;align-items:center}
+.bar{position:absolute;left:0;top:0;width:100%;height:14px;background:#0f766e}
+.brand{display:flex;align-items:center;gap:14px;font-weight:700;font-size:28px;margin-bottom:36px}
+.mark{width:52px;height:52px;border-radius:13px;background:#0f766e;color:#fff;display:grid;place-items:center;font-weight:800;font-size:28px}
+h1{font-size:56px;line-height:1.08;letter-spacing:-.02em;margin:0 0 28px}
+h1 span{color:#0f766e}
+.pills{display:flex;gap:12px;flex-wrap:wrap}
+.pill{font-size:22px;font-weight:600;padding:8px 16px;border-radius:10px}
+.l0{background:#dcfce7;color:#166534} .l1{background:#fef3c7;color:#92400e} .l2{background:#ffe4e6;color:#9f1239}
+.url{position:absolute;left:72px;bottom:40px;font-size:22px;color:#6b7280}
+
+.hero-art{width:440px;height:auto}
+</style></head><body><div class="bar"></div><div class="wrap"><div>
+<div class="brand"><span class="mark">H</span>Hamburg Student Jobs</div>
+<h1>Student jobs in Hamburg,<br><span>sorted by how much German you need.</span></h1>
+<div class="pills"><span class="pill l0">Not needed</span><span class="pill l1">Basic / a plus</span><span class="pill l2">Required</span></div>
+</div><svg class="hero-art" viewBox="0 0 460 230" role="img" aria-label="Line drawing of the Hamburg harbour skyline">
+          <g class="sky">
+            <circle cx="300" cy="52" r="18" class="sun"/>
+            <path d="M48 52h34M58 44h30M404 22h26M396 30h40" class="cloud"/>
+          </g>
+          <!-- Elbphilharmonie -->
+          <path d="M34 104 Q62 76 90 96 Q118 66 146 92 Q170 72 196 100 L196 184 L34 184 Z" class="glass"/>
+          <path d="M34 124h162M34 140h162M34 156h162" class="line thin"/>
+          <path d="M62 104v24M96 98v26M130 96v28M164 98v26" class="line thin"/>
+          <rect x="34" y="160" width="162" height="24" class="brick"/>
+          <path d="M34 104 Q62 76 90 96 Q118 66 146 92 Q170 72 196 100" class="line"/>
+          <!-- St. Michaelis tower -->
+          <path d="M226 184V112h26v72M230 112V92h18v20M233 92V74h12v18M239 74V38" class="line"/>
+          <path d="M233 74 L239 54 L245 74" class="line"/>
+          <circle cx="239" cy="102" r="5" class="line"/>
+          <!-- containers -->
+          <rect x="270" y="164" width="36" height="20" class="box c1"/>
+          <rect x="306" y="164" width="36" height="20" class="box c2"/>
+          <rect x="288" y="144" width="36" height="20" class="box c3"/>
+          <rect x="342" y="164" width="36" height="20" class="box c3"/>
+          <!-- harbour crane -->
+          <path d="M392 184V70M412 184V70M392 70l20 0M392 100l20 0M392 130l20 0M392 160l20 0M392 70l20 30M412 100l-20 30M392 130l20 30" class="line"/>
+          <path d="M330 70h120M330 70l62-22M450 70l-38-22M392 48h20" class="line"/>
+          <path d="M352 70v42" class="line thin"/>
+          <rect x="344" y="112" width="16" height="10" class="box c2"/>
+          <!-- water -->
+          <path d="M10 196 q12 -8 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0" class="water"/>
+          <path d="M40 212 q12 -6 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0" class="water thin"/>
+          <path d="M10 184h440" class="line"/>
+        </svg></div><div class="url">vulevu228.github.io/HamburgStudentJobs · updated every morning</div></body></html>

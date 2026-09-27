@@ -7,6 +7,13 @@
   <meta name="description" content="Every Werkstudent, internship and thesis job in Hamburg in one place, updated daily, with an honest answer to: do I need German?">
   <meta property="og:title" content="Hamburg Student Jobs">
   <meta property="og:description" content="Werkstudent, internship and thesis jobs in Hamburg, updated daily. Filter by how much German you really need.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vulevu228.github.io/HamburgStudentJobs/">
+  <meta property="og:image" content="https://vulevu228.github.io/HamburgStudentJobs/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Hamburg Student Jobs: student jobs in Hamburg, sorted by how much German you need">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M9 22V10h3v4.5h8V10h3v12h-3v-4.8h-8V22z' fill='white'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
   <script>
@@ -37,9 +44,44 @@
 
   <section class="hero">
     <div class="wrap">
-      <h1>Student jobs in Hamburg, <span class="accent">sorted by how much German you need.</span></h1>
-      <p class="lede">Werkstudent, internship, thesis and junior roles from the Federal Employment Agency and company career pages, updated every morning.</p>
-      <div class="stats" id="stats" aria-live="polite"></div>
+      <div class="hero-grid">
+        <div class="hero-text">
+          <h1>Student jobs in Hamburg, <span class="accent">sorted by how much German you need.</span></h1>
+          <p class="lede">Werkstudent, internship, thesis, side-job and junior roles from the Federal Employment Agency, Arbeitnow and company career pages, updated every morning.</p>
+          <div class="stats" id="stats" aria-live="polite"></div>
+        </div>
+        <!-- Hamburg skyline: Elbphilharmonie, St. Michaelis tower, harbour crane, containers -->
+        <svg class="hero-art" viewBox="0 0 460 230" role="img" aria-label="Line drawing of the Hamburg harbour skyline">
+          <g class="sky">
+            <circle cx="300" cy="52" r="18" class="sun"/>
+            <path d="M48 52h34M58 44h30M404 22h26M396 30h40" class="cloud"/>
+          </g>
+          <!-- Elbphilharmonie -->
+          <path d="M34 104 Q62 76 90 96 Q118 66 146 92 Q170 72 196 100 L196 184 L34 184 Z" class="glass"/>
+          <path d="M34 124h162M34 140h162M34 156h162" class="line thin"/>
+          <path d="M62 104v24M96 98v26M130 96v28M164 98v26" class="line thin"/>
+          <rect x="34" y="160" width="162" height="24" class="brick"/>
+          <path d="M34 104 Q62 76 90 96 Q118 66 146 92 Q170 72 196 100" class="line"/>
+          <!-- St. Michaelis tower -->
+          <path d="M226 184V112h26v72M230 112V92h18v20M233 92V74h12v18M239 74V38" class="line"/>
+          <path d="M233 74 L239 54 L245 74" class="line"/>
+          <circle cx="239" cy="102" r="5" class="line"/>
+          <!-- containers -->
+          <rect x="270" y="164" width="36" height="20" class="box c1"/>
+          <rect x="306" y="164" width="36" height="20" class="box c2"/>
+          <rect x="288" y="144" width="36" height="20" class="box c3"/>
+          <rect x="342" y="164" width="36" height="20" class="box c3"/>
+          <!-- harbour crane -->
+          <path d="M392 184V70M412 184V70M392 70l20 0M392 100l20 0M392 130l20 0M392 160l20 0M392 70l20 30M412 100l-20 30M392 130l20 30" class="line"/>
+          <path d="M330 70h120M330 70l62-22M450 70l-38-22M392 48h20" class="line"/>
+          <path d="M352 70v42" class="line thin"/>
+          <rect x="344" y="112" width="16" height="10" class="box c2"/>
+          <!-- water -->
+          <path d="M10 196 q12 -8 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0" class="water"/>
+          <path d="M40 212 q12 -6 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0" class="water thin"/>
+          <path d="M10 184h440" class="line"/>
+        </svg>
+      </div>
 
       <div class="searchrow">
         <label class="search">
@@ -106,6 +148,13 @@
       <ol class="cards" id="cards"></ol>
       <div class="more"><button id="moreBtn" type="button" class="secondary" hidden>Show more</button></div>
       <div class="empty" id="empty" hidden>
+        <svg class="empty-art" viewBox="0 0 120 90" aria-hidden="true">
+          <rect x="14" y="22" width="62" height="46" rx="6" class="e-card"/>
+          <path d="M24 36h34M24 46h24M24 56h30" class="e-line"/>
+          <circle cx="78" cy="52" r="17" class="e-lens"/>
+          <path d="M90 64l14 14" class="e-handle"/>
+          <path d="M72 46l12 12M84 46l-12 12" class="e-x"/>
+        </svg>
         <h3>No jobs match these filters</h3>
         <p>Try removing a filter, or turn off "English is enough".</p>
         <button type="button" class="secondary" id="emptyReset">Reset filters</button>
@@ -115,8 +164,8 @@
 
   <footer class="footer">
     <div class="wrap">
-      <p>Job data from the <a href="https://www.arbeitsagentur.de/jobsuche/">Bundesagentur für Arbeit</a> and public company career pages. Titles and links point to the original ads; always read the full ad before applying.</p>
-      <p>Summaries and language levels are written by AI (Claude) and can be wrong. Anonymous visit counts, no cookies. Built by <a href="https://vulevu228.github.io/">Emir Avni Sahin</a> · <a href="https://github.com/vulevu228/HamburgStudentJobs">source on GitHub</a></p>
+      <p>Job data from the <a href="https://www.arbeitsagentur.de/jobsuche/">Bundesagentur für Arbeit</a>, <a href="https://www.arbeitnow.com/">Arbeitnow</a> and public company career pages. Titles and links point to the original ads; always read the full ad before applying.</p>
+      <p>Language levels are detected automatically and AI summaries (Claude) can be wrong. Anonymous visit counts, no cookies. Built by <a href="https://vulevu228.github.io/">Emir Avni Sahin</a> · <a href="https://github.com/vulevu228/HamburgStudentJobs">source on GitHub</a></p>
     </div>
   </footer>
 
@@ -124,9 +173,18 @@
     <form method="dialog" class="dialog-close"><button class="ghost icon-only" aria-label="Close">✕</button></form>
     <h2 id="aboutTitle">How it works</h2>
     <ol class="steps">
-      <li><strong>Collect.</strong> Every morning a script asks the Federal Employment Agency's job search and the career pages of Hamburg employers for student-level jobs: Werkstudent, internship, thesis, junior and trainee roles.</li>
-      <li><strong>Read.</strong> Each new ad is read once. Rules pick out the job type, skills, hours and work mode; an AI model (Claude) writes a short English summary and judges how much German and English the ad really asks for, even when the ad itself is in German.</li>
-      <li><strong>Publish.</strong> The result is one file of jobs that this page filters right in your browser. Ads that disappear from their source are removed after a few days.</li>
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="18" cy="17" r="3"/></svg>
+        <div><strong>Collect.</strong> Every morning a script asks the Federal Employment Agency, Arbeitnow and the career pages of Hamburg employers for student-level jobs: Werkstudent, internship, thesis, side jobs, junior and trainee roles. The same ad posted by several branches or sites is shown once.</div>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h4"/></svg>
+        <div><strong>Read.</strong> Each new ad is read once. Rules pick out the job type, field, skills, hours, work mode and how much German the ad asks for. For English-friendly ads, an AI model (Claude) can add a short English summary and key requirements.</div>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4z"/><path d="M9 20h6M12 16v4"/><path d="M8 10l3 3 5-5"/></svg>
+        <div><strong>Publish.</strong> The result is one file of jobs that this page filters right in your browser. Ads that disappear from their source are removed after a few days.</div>
+      </li>
     </ol>
     <h3>"German needed" explained</h3>
     <ul class="legend">
@@ -140,6 +198,7 @@
   <template id="cardTpl">
     <li class="card">
       <div class="card-top">
+        <span class="avatar" aria-hidden="true"></span>
         <div class="card-titles">
           <h3 class="title"><a target="_blank" rel="noopener"></a></h3>
           <p class="meta"><span class="company"></span><span class="dot">·</span><span class="loc"></span></p>

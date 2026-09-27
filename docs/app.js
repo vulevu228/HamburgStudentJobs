@@ -3,7 +3,7 @@
 
 const $ = (s) => document.querySelector(s);
 const PAGE = 30;
-const LEVELS = ["Werkstudent", "Internship", "Thesis", "Junior / Trainee"];
+const LEVELS = ["Werkstudent", "Internship", "Thesis", "Student side job", "Junior / Trainee"];
 const GERMAN = [
   { id: 0, label: "Not needed" },
   { id: 1, label: "Basic / a plus" },
@@ -58,6 +58,17 @@ function ago(iso) {
   if (d < 30) return `${d} days ago`;
   const m = Math.round(d / 30);
   return m < 12 ? `${m} month${m > 1 ? "s" : ""} ago` : "over a year ago";
+}
+// initials tile per company: "Lufthansa Technik AG" -> "LT", same colour every time for the same company
+const LEGAL = /^(gmbh|ag|se|kg|co|mbh|ug|e\.?v|kgaa|ohg|inc|ltd|gbr|&|und|and|the|der|die|das)$/i;
+function initials(name) {
+  const words = (name || "?").replace(/[()|,.:]/g, " ").split(/\s+/).filter((w) => w && !LEGAL.test(w));
+  return ((words[0] || "?")[0] + (words[1] ? words[1][0] : (words[0] || "").slice(1, 2))).toUpperCase();
+}
+function hue(name) {
+  let h = 0;
+  for (const ch of name || "") h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return h;
 }
 const norm = (s) => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "");
 function matchOf(j) {
@@ -163,6 +174,7 @@ function card(j) {
   const c = tpl.content.firstElementChild.cloneNode(true);
   const a = c.querySelector(".title a"); a.href = j.url; a.textContent = j.title;
   c.querySelector(".company").textContent = j.company || "Company not named";
+  const av = c.querySelector(".avatar"); av.textContent = initials(j.company); av.style.setProperty("--h", hue(j.company));
   c.querySelector(".loc").textContent = j.location || "Hamburg";
 
   const save = c.querySelector(".save");
@@ -188,14 +200,15 @@ function card(j) {
   const skills = [...j.skills].sort((x, y) => hits.has(y) - hits.has(x));
   c.querySelector(".skills").replaceChildren(...skills.slice(0, 10).map((s) => el("span", { class: "skill" + (hits.has(s) ? " hit" : "") }, s)));
 
-  const facts = [`Posted ${ago(j.posted)}`, j.hours, j.pay, j.duration, j.start && `Start ${j.start}`].filter(Boolean);
+  const facts = [`Posted ${ago(j.posted)}`, j.copies > 1 && `Open at ${j.copies} locations`, j.hours, j.pay, j.duration,
+    j.start && `Start ${j.start}`].filter(Boolean);
   if (hits.size) facts.unshift(`Matches ${hits.size} of your skill${hits.size > 1 ? "s" : ""}`);
   c.querySelector(".facts").textContent = facts.join(" · ");
   const view = c.querySelector(".view"); view.href = j.url;
   const opened = () => track("open-ad", true);
   view.addEventListener("click", opened); a.addEventListener("click", opened);
   view.setAttribute("aria-label", `View the original ad for ${j.title} (opens in a new tab)`);
-  view.firstChild.textContent = j.source === "Arbeitsagentur" ? "View on Arbeitsagentur " : "View on company site ";
+  view.firstChild.textContent = j.source === "Company Site" ? "View on company site " : `View on ${j.source} `;
   return c;
 }
 

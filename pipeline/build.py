@@ -28,7 +28,8 @@ I = re.IGNORECASE
 
 
 def collect():
-    tasks = [("Arbeitsagentur", sources.src_arbeitsagentur, (catalog.BA_TERMS, catalog.CITY, catalog.RADIUS_KM))]
+    tasks = [("Arbeitsagentur", sources.src_arbeitsagentur, (catalog.BA_TERMS, catalog.CITY, catalog.RADIUS_KM)),
+             ("Arbeitnow", sources.src_arbeitnow, (catalog.CITY,))]
     for ats, slug, name in catalog.COMPANIES:
         tasks.append((name, sources.ATS[ats], (slug, name, catalog.CITY) if ats == "workday" else (slug, name)))
     jobs, ok, failed = [], set(), []
@@ -48,7 +49,7 @@ def collect():
 
 def in_area(job):
     # the Arbeitsagentur search is already radius-limited; company feeds list every office worldwide
-    return job.source == "Arbeitsagentur" or re.search(
+    return job.source in ("Arbeitsagentur", "Arbeitnow") or re.search(
         r"hamburg|remote.*(germany|deutschland|dach)|germany.*remote|deutschlandweit", job.location, I)
 
 
@@ -116,23 +117,30 @@ def main():
     raw, ok_sources, failed = collect()
 
     # keep student-level postings in the area; one record per company+title
-    seen_keys, fresh, still = set(), [], []
-    raw.sort(key=lambda j: j.source == "Arbeitsagentur")  # on duplicates keep the company's own ad (direct link)
+    seen_keys, fresh, still = {}, [], []
+    # on duplicates keep the company's own ad (direct link), then Arbeitnow, then the job agency
+    raw.sort(key=lambda j: {"Company Site": 0, "Arbeitnow": 1}.get(j.source, 2))
     for job in raw:
         level = extract.level_of(job.title, job.level_hint)
         if not level or not in_area(job):
             continue
         job.title = clean_title(job.title, job.company)
-        # same ad often appears twice (job agency + company site, or two legal entities): match on the
-        # first word of the company name plus the title
+        # same ad often appears twice (job agency + company site, or two legal entities) or once per branch
+        # (e.g. one Lidl ad per store): match on the first word of the company name plus the title
         key = company_key(job.company) + "|" + norm(job.title)
         if key in seen_keys:
+            seen_keys[key][job.source] = seen_keys[key].get(job.source, 0) + 1
             continue
-        seen_keys.add(key)
+        seen_keys[key] = {job.source: 1}
+        job.extra["key"] = key
         (still if job.id in known else fresh).append((job, level))
+
+    def copies(job):  # how many branches posted this ad (largest count within one source)
+        return max(seen_keys[job.extra["key"]].values())
 
     for job, _ in still:
         known[job.id]["last_seen"] = today
+        known[job.id]["copies"] = copies(job)
     print(f"{len(raw)} postings -> {len(still) + len(fresh)} student jobs in the area ({len(fresh)} new)")
 
     enricher = Enricher()
@@ -154,7 +162,7 @@ def main():
                 failed.append(f"description {job.id}: {e}")
     with ThreadPoolExecutor(8) as ex:
         list(ex.map(fetch, fresh + retry))
-    new_recs = {job.id: describe(job, level, today) for job, level in fresh}
+    new_recs = {job.id: {**describe(job, level, today), "copies": copies(job)} for job, level in fresh}
     texts = {job.id: job.description for job, _ in fresh + retry}
 
     # AI: new postings first, then the retries
@@ -179,7 +187,7 @@ def main():
     def alive(r):
         if r.get("student_job") is False:
             return False
-        source_ok = "Arbeitsagentur" in ok_sources if r["source"] == "Arbeitsagentur" else r["company"] in ok_sources
+        source_ok = r["source"] in ok_sources if r["source"] in ("Arbeitsagentur", "Arbeitnow") else r["company"] in ok_sources
         gone_days = (date.fromisoformat(today) - date.fromisoformat(r["last_seen"])).days
         return gone_days < GRACE_DAYS or not source_ok
     jobs = sorted((r for r in known.values() if alive(r)), key=lambda r: (r["posted"], r["id"]), reverse=True)

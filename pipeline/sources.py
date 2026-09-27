@@ -202,6 +202,35 @@ def src_workday(spec, name, city):
             return out
 
 
+def src_arbeitnow(city, max_pages=60):
+    """Arbeitnow's free job-board API (Germany-wide, many English ads). Paged, behind Cloudflare, so it is
+    paced and backs off on 429. Keeps jobs in the city plus remote jobs."""
+    out, url, page, waits = [], "https://www.arbeitnow.com/api/job-board-api", 0, 0
+    while url and page < max_pages:
+        r = requests.get(url, headers={**UA, "Accept": "application/json"}, timeout=30)
+        if r.status_code == 429 or not r.text.lstrip().startswith("{"):
+            waits += 1
+            if waits > 6:
+                raise RuntimeError(f"rate-limited on page {page + 1}")
+            time.sleep(15 * waits)
+            continue
+        r.raise_for_status()
+        d = r.json()
+        for j in d.get("data", []):
+            loc = j.get("location", "")
+            if city.lower() not in loc.lower() and not j.get("remote"):
+                continue
+            out.append(Job(f"arbeitnow:{j['slug']}", j.get("company_name", ""), j["title"],
+                           loc if city.lower() in loc.lower() else f"Remote, Germany ({loc})",
+                           j["url"], "Arbeitnow", work_mode="Remote" if j.get("remote") else "",
+                           level_hint=" ".join(j.get("job_types", [])), description=strip_html(j.get("description", "")),
+                           posted=datetime.fromtimestamp(j["created_at"], timezone.utc).date().isoformat() if j.get("created_at") else ""))
+        url = (d.get("links") or {}).get("next")
+        page += 1
+        time.sleep(1.5)
+    return out
+
+
 ATS = {"greenhouse": src_greenhouse, "lever": src_lever, "ashby": src_ashby,
        "smartrecruiters": src_smartrecruiters, "personio": src_personio, "workday": src_workday}
 
