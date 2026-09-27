@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hamburg Student Jobs</title>
-  <meta name="description" content="Every Werkstudent, internship and thesis job in Hamburg in one place, updated daily, with an honest answer to: do I need German?">
+  <title data-i18n-key="meta.title">Hamburg Student Jobs – find the student job that fits you</title>
+  <meta name="description" data-i18n-key="meta.description" content="Every Werkstudent, internship, thesis, side-job and junior role in Hamburg in one place. Filter by field, skills, job type and how much German you need – updated every morning.">
   <meta property="og:title" content="Hamburg Student Jobs">
-  <meta property="og:description" content="Werkstudent, internship and thesis jobs in Hamburg, updated daily. Filter by how much German you really need.">
+  <meta property="og:description" content="Every student job in Hamburg in one place. Filter by field, skills, job type and how much German you need – updated every morning. Also in German.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vulevu228.github.io/HamburgStudentJobs/">
   <meta property="og:image" content="https://vulevu228.github.io/HamburgStudentJobs/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Hamburg Student Jobs: student jobs in Hamburg, sorted by how much German you need">
+  <meta property="og:image:alt" content="Hamburg Student Jobs: find the student job in Hamburg that fits you">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M9 22V10h3v4.5h8V10h3v12h-3v-4.8h-8V22z' fill='white'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
@@ -22,20 +22,21 @@
   </script>
 </head>
 <body>
-  <a class="skip" href="#results">Skip to results</a>
+  <a class="skip" href="#results" data-i18n="skip">Skip to results</a>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="./" aria-label="Hamburg Student Jobs, home">
+      <a class="brand" href="./" aria-label="Hamburg Student Jobs, home" data-i18n-attr="aria-label:brand.home">
         <span class="brand-mark" aria-hidden="true">H</span>
         <span class="brand-name">Hamburg Student Jobs</span>
       </a>
       <nav class="top-actions">
-        <button class="ghost" id="aboutBtn" type="button">How it works</button>
-        <a class="ghost icon-only" href="https://github.com/vulevu228/HamburgStudentJobs" aria-label="Source code on GitHub" title="Source code on GitHub">
+        <button class="ghost" id="aboutBtn" type="button" data-i18n-attr="aria-label:nav.how;title:nav.how"><span class="long" data-i18n="nav.how">How it works</span><svg class="short" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+        <button class="ghost lang-btn" id="langBtn" type="button" data-i18n-attr="aria-label:nav.langLabel;title:nav.langLabel"><span class="long" data-i18n="nav.lang">Deutsch</span><span class="short" data-i18n="nav.langShort">DE</span></button>
+        <a class="ghost icon-only" href="https://github.com/vulevu228/HamburgStudentJobs" aria-label="Source code on GitHub" title="Source code on GitHub" data-i18n-attr="aria-label:nav.github;title:nav.github">
           <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         </a>
-        <button class="ghost icon-only" id="themeBtn" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+        <button class="ghost icon-only" id="themeBtn" type="button" aria-label="Switch colour theme" title="Switch colour theme" data-i18n-attr="aria-label:nav.theme;title:nav.theme">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
         </button>
       </nav>
@@ -46,12 +47,12 @@
     <div class="wrap">
       <div class="hero-grid">
         <div class="hero-text">
-          <h1>Student jobs in Hamburg, <span class="accent">sorted by how much German you need.</span></h1>
-          <p class="lede">Werkstudent, internship, thesis, side-job and junior roles from the Federal Employment Agency, Adzuna, Arbeitnow and company career pages, updated every morning.</p>
+          <h1 data-i18n-html="hero.title">Student jobs in Hamburg <span class="accent">that fit you.</span></h1>
+          <p class="lede" data-i18n="hero.lede">Every Werkstudent, internship, thesis, side-job and junior role in one place. Filter by field, skills, job type and how much German you need – updated every morning.</p>
           <div class="stats" id="stats" aria-live="polite"></div>
         </div>
         <!-- Hamburg skyline: Elbphilharmonie, St. Michaelis tower, harbour crane, containers -->
-        <svg class="hero-art" viewBox="0 0 460 230" role="img" aria-label="Line drawing of the Hamburg harbour skyline">
+        <svg class="hero-art" viewBox="0 0 460 230" role="img" aria-label="Line drawing of the Hamburg harbour skyline" data-i18n-attr="aria-label:hero.art">
           <g class="sky">
             <circle cx="300" cy="52" r="18" class="sun"/>
             <path d="M48 52h34M58 44h30M404 22h26M396 30h40" class="cloud"/>
@@ -86,61 +87,61 @@
       <div class="searchrow">
         <label class="search">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M10 2a8 8 0 0 1 6.32 12.9l5.39 5.4-1.42 1.4-5.39-5.38A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg>
-          <span class="sr-only">Search jobs</span>
-          <input id="q" type="search" placeholder="Search title, company or skill, e.g. Python, marketing, Airbus" autocomplete="off">
+          <span class="sr-only" data-i18n="search.label">Search jobs</span>
+          <input id="q" type="search" placeholder="Search title, company or skill, e.g. Python, marketing, Airbus" autocomplete="off" data-i18n-attr="placeholder:search.placeholder">
         </label>
-        <label class="switch big" title="Hide jobs whose ad requires good or fluent German">
+        <label class="switch big" title="Hide jobs whose ad requires good or fluent German" data-i18n-attr="title:english.title">
           <input type="checkbox" id="englishOnly">
           <span class="track" aria-hidden="true"><span class="thumb"></span></span>
-          <span>English is enough</span>
+          <span data-i18n="english.switch">English is enough</span>
         </label>
       </div>
     </div>
   </section>
 
   <main class="wrap layout">
-    <aside class="filters" id="filters" aria-label="Filters">
+    <aside class="filters" id="filters" aria-label="Filters" data-i18n-attr="aria-label:filters.aria">
       <div class="filters-head">
-        <h2>Filters</h2>
-        <button class="link" id="resetBtn" type="button">Reset all</button>
-        <button class="ghost icon-only close-filters" id="closeFilters" type="button" aria-label="Close filters">✕</button>
+        <h2 data-i18n="filters.title">Filters</h2>
+        <button class="link" id="resetBtn" type="button" data-i18n="filters.reset">Reset all</button>
+        <button class="ghost icon-only close-filters" id="closeFilters" type="button" aria-label="Close filters" data-i18n-attr="aria-label:filters.close">✕</button>
       </div>
 
-      <fieldset><legend>Job type</legend><div class="chips" id="f-level"></div></fieldset>
-      <fieldset><legend>German needed</legend><div class="options" id="f-german"></div></fieldset>
-      <fieldset><legend>Field</legend><div class="options scroll" id="f-field"></div></fieldset>
-      <fieldset><legend>Work mode</legend><div class="chips" id="f-mode"></div></fieldset>
+      <fieldset><legend data-i18n="f.type">Job type</legend><div class="chips" id="f-level"></div></fieldset>
+      <fieldset><legend data-i18n="f.german">German needed</legend><div class="options" id="f-german"></div></fieldset>
+      <fieldset><legend data-i18n="f.field">Field</legend><div class="options scroll" id="f-field"></div></fieldset>
+      <fieldset><legend data-i18n="f.mode">Work mode</legend><div class="chips" id="f-mode"></div></fieldset>
       <fieldset>
-        <legend>Posted</legend>
+        <legend data-i18n="f.posted">Posted</legend>
         <div class="chips" id="f-posted"></div>
       </fieldset>
       <fieldset>
-        <legend>Your skills</legend>
-        <p class="hint">Add what you know; jobs that ask for it rank higher and show a match.</p>
+        <legend data-i18n="f.skills">Your skills</legend>
+        <p class="hint" data-i18n="f.skillsHint">Add what you know; jobs that ask for it rank higher and show a match.</p>
         <div class="skill-input">
-          <input id="skillInput" list="skillList" placeholder="e.g. Python" autocomplete="off" aria-label="Add a skill">
+          <input id="skillInput" list="skillList" placeholder="e.g. Python" autocomplete="off" aria-label="Add a skill" data-i18n-attr="placeholder:f.skillPlaceholder;aria-label:f.skillAria">
           <datalist id="skillList"></datalist>
-          <button type="button" id="skillAdd" class="small">Add</button>
+          <button type="button" id="skillAdd" class="small" data-i18n="f.add">Add</button>
         </div>
         <div class="chips removable" id="mySkills"></div>
       </fieldset>
       <fieldset>
-        <legend>More</legend>
-        <label class="check"><input type="checkbox" id="hideMandatory"> Hide "mandatory internship only"</label>
-        <label class="check"><input type="checkbox" id="savedOnly"> Saved jobs only <span class="count" id="savedCount"></span></label>
+        <legend data-i18n="f.more">More</legend>
+        <label class="check"><input type="checkbox" id="hideMandatory"> <span data-i18n="f.hideMandatory">Hide "mandatory internship only"</span></label>
+        <label class="check"><input type="checkbox" id="savedOnly"> <span data-i18n="f.savedOnly">Saved jobs only</span> <span class="count" id="savedCount"></span></label>
       </fieldset>
     </aside>
 
-    <section class="results" id="results" aria-label="Job results">
+    <section class="results" id="results" aria-label="Job results" data-i18n-attr="aria-label:results.aria">
       <div class="results-head">
-        <button class="filter-toggle" id="openFilters" type="button">Filters <span id="activeCount" class="badge-count"></span></button>
+        <button class="filter-toggle" id="openFilters" type="button"><span data-i18n="filters.title">Filters</span> <span id="activeCount" class="badge-count"></span></button>
         <p id="resultCount" aria-live="polite"></p>
         <label class="sort">
-          <span>Sort</span>
+          <span data-i18n="sort">Sort</span>
           <select id="sort">
-            <option value="new">Newest first</option>
-            <option value="match">Best skill match</option>
-            <option value="company">Company A–Z</option>
+            <option value="new" data-i18n="sort.new">Newest first</option>
+            <option value="match" data-i18n="sort.match">Best skill match</option>
+            <option value="company" data-i18n="sort.company">Company A–Z</option>
           </select>
         </label>
       </div>
@@ -155,44 +156,44 @@
           <path d="M90 64l14 14" class="e-handle"/>
           <path d="M72 46l12 12M84 46l-12 12" class="e-x"/>
         </svg>
-        <h3>No jobs match these filters</h3>
-        <p>Try removing a filter, or turn off "English is enough".</p>
-        <button type="button" class="secondary" id="emptyReset">Reset filters</button>
+        <h3 data-i18n="empty.title">No jobs match these filters</h3>
+        <p data-i18n="empty.text">Try removing a filter, or turn off "English is enough".</p>
+        <button type="button" class="secondary" id="emptyReset" data-i18n="empty.reset">Reset filters</button>
       </div>
     </section>
   </main>
 
   <footer class="footer">
     <div class="wrap">
-      <p>Job data from the <a href="https://www.arbeitsagentur.de/jobsuche/">Bundesagentur für Arbeit</a>, <a href="https://www.arbeitnow.com/">Arbeitnow</a>, <a href="https://www.adzuna.de/">Adzuna</a> and public company career pages. Titles and links point to the original ads; always read the full ad before applying.</p>
-      <p>Language levels are detected automatically and AI summaries (Claude) can be wrong. Anonymous visit counts, no cookies. Built by <a href="https://vulevu228.github.io/">Emir Avni Sahin</a> · <a href="https://github.com/vulevu228/HamburgStudentJobs">source on GitHub</a></p>
+      <p data-i18n-html="footer.sources"></p>
+      <p data-i18n-html="footer.note"></p>
     </div>
   </footer>
 
   <dialog id="about" aria-labelledby="aboutTitle">
-    <form method="dialog" class="dialog-close"><button class="ghost icon-only" aria-label="Close">✕</button></form>
-    <h2 id="aboutTitle">How it works</h2>
+    <form method="dialog" class="dialog-close"><button class="ghost icon-only" aria-label="Close" data-i18n-attr="aria-label:close">✕</button></form>
+    <h2 id="aboutTitle" data-i18n="about.title">How it works</h2>
     <ol class="steps">
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="18" cy="17" r="3"/></svg>
-        <div><strong>Collect.</strong> Every morning a script asks the Federal Employment Agency, Arbeitnow and the career pages of Hamburg employers for student-level jobs: Werkstudent, internship, thesis, side jobs, junior and trainee roles. The same ad posted by several branches or sites is shown once.</div>
+        <div data-i18n-html="about.collect"></div>
       </li>
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h4"/></svg>
-        <div><strong>Read.</strong> Each new ad is read once. Rules pick out the job type, field, skills, hours, work mode and how much German the ad asks for. For English-friendly ads, an AI model (Claude) can add a short English summary and key requirements.</div>
+        <div data-i18n-html="about.read"></div>
       </li>
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4z"/><path d="M9 20h6M12 16v4"/><path d="M8 10l3 3 5-5"/></svg>
-        <div><strong>Publish.</strong> The result is one file of jobs that this page filters right in your browser. Ads that disappear from their source are removed after a few days.</div>
+        <div data-i18n-html="about.publish"></div>
       </li>
     </ol>
-    <h3>"German needed" explained</h3>
+    <h3 data-i18n="about.legendTitle">"German needed" explained</h3>
     <ul class="legend">
-      <li><span class="lang-pill l0">Not needed</span> The ad does not ask for German, or says it isn't required.</li>
-      <li><span class="lang-pill l1">Basic / a plus</span> Some German helps, or it is listed as nice to have.</li>
-      <li><span class="lang-pill l2">Required</span> Good or fluent German is required, or the ad is written in German only.</li>
+      <li><span class="lang-pill l0" data-i18n="german.0">Not needed</span> <span data-i18n="about.l0"></span></li>
+      <li><span class="lang-pill l1" data-i18n="german.1">Basic / a plus</span> <span data-i18n="about.l1"></span></li>
+      <li><span class="lang-pill l2" data-i18n="german.2">Required</span> <span data-i18n="about.l2"></span></li>
     </ul>
-    <p class="hint">Nothing you enter here leaves your browser. Saved jobs and skills are stored only on this device. The site counts visits anonymously (no cookies, no search terms) to see whether it is useful.</p>
+    <p class="hint" data-i18n-html="about.privacy"></p>
   </dialog>
 
   <template id="cardTpl">
@@ -205,7 +206,7 @@
         </div>
         <button class="save" type="button" aria-pressed="false" title="Save this job">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
-          <span class="sr-only">Save</span>
+          <span class="sr-only" data-i18n="save">Save</span>
         </button>
       </div>
       <div class="badges"></div>
@@ -222,6 +223,7 @@
   <!-- anonymous visit counts, no cookies: https://www.goatcounter.com (only the page path and event names are sent) -->
   <script data-goatcounter="https://hamburgstudentjobs.goatcounter.com/count"
           data-goatcounter-settings='{"no_onload": true}' async src="https://gc.zgo.at/count.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -4,13 +4,14 @@
 const $ = (s) => document.querySelector(s);
 const PAGE = 30;
 const LEVELS = ["Werkstudent", "Internship", "Thesis", "Student side job", "Junior / Trainee"];
-const GERMAN = [
-  { id: 0, label: "Not needed" },
-  { id: 1, label: "Basic / a plus" },
-  { id: 2, label: "Required" },
-];
+const GERMAN = [0, 1, 2];
 const MODES = ["Remote", "Hybrid", "Onsite", "Not stated"];
-const POSTED = [{ id: "", label: "Any time" }, { id: "1", label: "Today" }, { id: "7", label: "7 days" }, { id: "30", label: "30 days" }];
+const POSTED = ["", "1", "7", "30"];
+// display names (data values stay English)
+const levelName = (l) => t(`level.${l}`);
+const fieldName = (f) => t(`field.${f}`);
+const modeName = (m) => t(`mode.${m}`);
+const num = (n) => n.toLocaleString(I18N.locale());
 
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
@@ -44,20 +45,29 @@ function germanNeed(j) {
 function germanText(j) {
   const n = germanNeed(j);
   if (j.ai) {
-    return n === 0 ? "No German needed" : n === 1 ? "Basic German"
-      : j.german_level === "good" ? "Good German (B1–B2)" : "Fluent German";
+    return t(n === 0 ? "gtext.none" : n === 1 ? "gtext.basic" : j.german_level === "good" ? "gtext.good" : "gtext.fluent");
   }
-  return n === 0 ? "German not mentioned" : n === 1 ? "German a plus" : "German required";
+  return t(n === 0 ? "gtext.notMentioned" : n === 1 ? "gtext.plus" : "gtext.required");
 }
 const modeOf = (j) => j.work_mode || "Not stated";
 const daysAgo = (iso) => Math.max(0, Math.round((Date.now() - new Date(iso + "T00:00:00").getTime()) / 864e5));
 function ago(iso) {
   const d = daysAgo(iso);
-  if (d === 0) return "today";
-  if (d === 1) return "yesterday";
-  if (d < 30) return `${d} days ago`;
+  if (d === 0) return t("ago.today");
+  if (d === 1) return t("ago.yesterday");
+  if (d < 30) return t("ago.days", { n: d });
   const m = Math.round(d / 30);
-  return m < 12 ? `${m} month${m > 1 ? "s" : ""} ago` : "over a year ago";
+  return m === 1 ? t("ago.month") : m < 12 ? t("ago.months", { n: m }) : t("ago.year");
+}
+// job details come from the pipeline in English units ("20 h/week", "6 months", ISO dates): show them locally
+function detail(s) {
+  if (!s) return s;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return new Date(s + "T00:00:00").toLocaleDateString(I18N.locale(), { day: "numeric", month: "short", year: "numeric" });
+  }
+  if (I18N.lang !== "de") return s === "part-time" ? "Part-time" : s;
+  return s.replace(/h\/week/g, "Std./Woche").replace(/\bmonths\b/g, "Monate").replace(/^part-time$/, "Teilzeit")
+    .replace(/EUR\/h\b/g, "€/Std.").replace(/EUR\/yr\b/g, "€/Jahr");
 }
 // initials tile per company: "Lufthansa Technik AG" -> "LT", same colour every time for the same company
 const LEGAL = /^(gmbh|ag|se|kg|co|mbh|ug|e\.?v|kgaa|ohg|inc|ltd|gbr|&|und|and|the|der|die|das)$/i;
@@ -123,31 +133,32 @@ function toggle(set, v) { set.has(v) ? set.delete(v) : set.add(v); }
 
 function renderFilters() {
   const lv = $("#f-level"); lv.replaceChildren(...LEVELS.map((l) =>
-    chip(l, state.levels.has(l), () => { toggle(state.levels, l); update(); }, countWhere("levels", (j) => j.level === l))));
+    chip(levelName(l), state.levels.has(l), () => { toggle(state.levels, l); update(); }, countWhere("levels", (j) => j.level === l))));
 
   const gm = $("#f-german"); gm.replaceChildren(...GERMAN.map((g) => {
-    const n = countWhere("german", (j) => germanNeed(j) === g.id);
+    const n = countWhere("german", (j) => germanNeed(j) === g);
     return el("label", { class: "opt" + (n ? "" : " zero") },
-      el("input", { type: "checkbox", checked: state.german.has(g.id), onchange: () => { toggle(state.german, g.id); update(); } }),
-      el("span", { class: `lang-pill l${g.id}` }, g.label), el("span", { class: "n" }, n));
+      el("input", { type: "checkbox", checked: state.german.has(g), onchange: () => { toggle(state.german, g); update(); } }),
+      el("span", { class: `lang-pill l${g}` }, t(`german.${g}`)), el("span", { class: "n" }, num(n)));
   }));
 
-  const fields = [...new Set(JOBS.map((j) => j.field))].sort((a, b) => (a === "Other") - (b === "Other") || a.localeCompare(b));
+  const fields = [...new Set(JOBS.map((j) => j.field))]
+    .sort((a, b) => (a === "Other") - (b === "Other") || fieldName(a).localeCompare(fieldName(b), I18N.locale()));
   $("#f-field").replaceChildren(...fields.map((f) => {
     const n = countWhere("fields", (j) => j.field === f);
     return el("label", { class: "opt" + (n ? "" : " zero") },
       el("input", { type: "checkbox", checked: state.fields.has(f), onchange: () => { toggle(state.fields, f); update(); } }),
-      el("span", {}, f), el("span", { class: "n" }, n));
+      el("span", {}, fieldName(f)), el("span", { class: "n" }, num(n)));
   }));
 
   $("#f-mode").replaceChildren(...MODES.map((m) =>
-    chip(m, state.modes.has(m), () => { toggle(state.modes, m); update(); }, countWhere("modes", (j) => modeOf(j) === m))));
+    chip(modeName(m), state.modes.has(m), () => { toggle(state.modes, m); update(); }, countWhere("modes", (j) => modeOf(j) === m))));
 
   $("#f-posted").replaceChildren(...POSTED.map((p) =>
-    chip(p.label, state.posted === p.id, () => { state.posted = p.id; update(); })));
+    chip(t(`posted.${p}`), state.posted === p, () => { state.posted = p; update(); })));
 
   $("#mySkills").replaceChildren(...state.skills.map((s) =>
-    el("button", { type: "button", class: "chip", title: `Remove ${s}`, onclick: () => {
+    el("button", { type: "button", class: "chip", title: t("remove.skill", { s }), onclick: () => {
       state.skills = state.skills.filter((x) => x !== s); store.set("hsj-skills", state.skills); update();
     } }, s)));
 
@@ -156,16 +167,16 @@ function renderFilters() {
 
 function activeChips() {
   const out = [];
-  const add = (label, off) => out.push(el("button", { type: "button", class: "chip", title: "Remove filter", onclick: () => { off(); update(); } }, label));
-  if (state.q) add(`"${state.q}"`, () => { state.q = ""; $("#q").value = ""; });
-  if (state.english) add("English is enough", () => { state.english = false; });
-  state.levels.forEach((l) => add(l, () => state.levels.delete(l)));
-  state.german.forEach((g) => add(`German: ${GERMAN[g].label}`, () => state.german.delete(g)));
-  state.fields.forEach((f) => add(f, () => state.fields.delete(f)));
-  state.modes.forEach((m) => add(m, () => state.modes.delete(m)));
-  if (state.posted) add(`Posted: ${POSTED.find((p) => p.id === state.posted).label}`, () => { state.posted = ""; });
-  if (state.hideMandatory) add("No mandatory-only internships", () => { state.hideMandatory = false; });
-  if (state.savedOnly) add("Saved only", () => { state.savedOnly = false; });
+  const add = (label, off) => out.push(el("button", { type: "button", class: "chip", title: t("remove.filter"), onclick: () => { off(); update(); } }, label));
+  if (state.q) add(t("chip.search", { q: state.q }), () => { state.q = ""; $("#q").value = ""; });
+  if (state.english) add(t("english.switch"), () => { state.english = false; });
+  state.levels.forEach((l) => add(levelName(l), () => state.levels.delete(l)));
+  state.german.forEach((g) => add(t("chip.german", { l: t(`german.${g}`) }), () => state.german.delete(g)));
+  state.fields.forEach((f) => add(fieldName(f), () => state.fields.delete(f)));
+  state.modes.forEach((m) => add(modeName(m), () => state.modes.delete(m)));
+  if (state.posted) add(t("chip.posted", { l: t(`posted.${state.posted}`) }), () => { state.posted = ""; });
+  if (state.hideMandatory) add(t("chip.noMandatory"), () => { state.hideMandatory = false; });
+  if (state.savedOnly) add(t("chip.saved"), () => { state.savedOnly = false; });
   return out;
 }
 
@@ -173,23 +184,23 @@ const tpl = $("#cardTpl");
 function card(j) {
   const c = tpl.content.firstElementChild.cloneNode(true);
   const a = c.querySelector(".title a"); a.href = j.url; a.textContent = j.title;
-  c.querySelector(".company").textContent = j.company || "Company not named";
+  c.querySelector(".company").textContent = j.company || t("company.none");
   const av = c.querySelector(".avatar"); av.textContent = initials(j.company); av.style.setProperty("--h", hue(j.company));
   c.querySelector(".loc").textContent = j.location || "Hamburg";
 
   const save = c.querySelector(".save");
-  const setSave = () => { const on = saved.has(j.id); save.setAttribute("aria-pressed", String(on)); save.title = on ? "Remove from saved" : "Save this job"; };
+  const setSave = () => { const on = saved.has(j.id); save.setAttribute("aria-pressed", String(on)); save.title = on ? t("save.remove") : t("save.add"); };
   setSave();
   save.addEventListener("click", () => { if (!saved.has(j.id)) track("save-job", true); toggle(saved, j.id); store.set("hsj-saved", [...saved]); setSave(); renderFilters(); if (state.savedOnly) update(); });
 
   const need = germanNeed(j);
   const badges = [
-    daysAgo(j.first_seen) <= 1 && daysAgo(j.posted) <= 3 ? el("span", { class: "badge new" }, "New") : null,
-    el("span", { class: "badge level" }, j.level),
+    daysAgo(j.first_seen) <= 1 && daysAgo(j.posted) <= 3 ? el("span", { class: "badge new" }, t("badge.new")) : null,
+    el("span", { class: "badge level" }, levelName(j.level)),
     el("span", { class: `lang-pill l${need}` }, germanText(j)),
-    el("span", { class: "badge" }, j.field),
-    j.work_mode ? el("span", { class: "badge" }, j.work_mode) : null,
-    j.mandatory ? el("span", { class: "badge warn", title: "Only for students whose degree requires this internship" }, "Mandatory internship only") : null,
+    el("span", { class: "badge" }, fieldName(j.field)),
+    j.work_mode ? el("span", { class: "badge" }, modeName(j.work_mode)) : null,
+    j.mandatory ? el("span", { class: "badge warn", title: t("badge.mandatoryTitle") }, t("badge.mandatory")) : null,
   ];
   c.querySelector(".badges").replaceChildren(...badges.filter(Boolean));
 
@@ -200,15 +211,15 @@ function card(j) {
   const skills = [...j.skills].sort((x, y) => hits.has(y) - hits.has(x));
   c.querySelector(".skills").replaceChildren(...skills.slice(0, 10).map((s) => el("span", { class: "skill" + (hits.has(s) ? " hit" : "") }, s)));
 
-  const facts = [`Posted ${ago(j.posted)}`, j.copies > 1 && `Open at ${j.copies} locations`, j.hours, j.pay, j.duration,
-    j.start && `Start ${j.start}`].filter(Boolean);
-  if (hits.size) facts.unshift(`Matches ${hits.size} of your skill${hits.size > 1 ? "s" : ""}`);
+  const facts = [t("fact.posted", { ago: ago(j.posted) }), j.copies > 1 && t("fact.copies", { n: j.copies }),
+    detail(j.hours), detail(j.pay), detail(j.duration), j.start && t("fact.start", { d: detail(j.start) })].filter(Boolean);
+  if (hits.size) facts.unshift(hits.size === 1 ? t("fact.matches.one") : t("fact.matches.many", { n: hits.size }));
   c.querySelector(".facts").textContent = facts.join(" · ");
   const view = c.querySelector(".view"); view.href = j.url;
   const opened = () => track("open-ad", true);
   view.addEventListener("click", opened); a.addEventListener("click", opened);
-  view.setAttribute("aria-label", `View the original ad for ${j.title} (opens in a new tab)`);
-  view.firstChild.textContent = j.source === "Company Site" ? "View on company site " : `View on ${j.source} `;
+  view.setAttribute("aria-label", t("view.aria", { t: j.title }));
+  view.firstChild.textContent = (j.source === "Company Site" ? t("view.company") : t("view.source", { s: j.source })) + " ";
   if (j.source === "Adzuna") c.querySelector(".card-foot").insertBefore(adzunaLabel(), view);
   return c;
 }
@@ -218,7 +229,7 @@ function adzunaLabel() {
   const logo = el("img", { src: "adzuna-logo.png", alt: "Adzuna", height: "40" });
   logo.addEventListener("error", () => logo.replaceWith(el("strong", { class: "adzuna-word" }, "Adzuna")), { once: true });
   return el("span", { class: "attrib" },
-    el("a", { href: "https://www.adzuna.de", target: "_blank", rel: "noopener" }, "Jobs"), " by ",
+    el("a", { href: "https://www.adzuna.de", target: "_blank", rel: "noopener" }, t("jobsBy")), t("by"),
     el("a", { href: "https://www.adzuna.de", target: "_blank", rel: "noopener" }, logo));
 }
 
@@ -230,10 +241,10 @@ function update(keepPage) {
   $("#activeFilters").replaceChildren(...activeChips());
   const nActive = activeChips().length;
   $("#activeCount").textContent = nActive || "";
-  $("#resultCount").textContent = `${list.length.toLocaleString("en")} job${list.length === 1 ? "" : "s"}`;
+  $("#resultCount").textContent = list.length === 1 ? t("count.one") : t("count.many", { n: num(list.length) });
   $("#cards").replaceChildren(...list.slice(0, shown).map(card));
   $("#moreBtn").hidden = list.length <= shown;
-  $("#moreBtn").textContent = `Show more (${(list.length - shown).toLocaleString("en")} left)`;
+  $("#moreBtn").textContent = t("more", { n: num(list.length - shown) });
   $("#empty").hidden = list.length > 0;
   writeURL();
 }
@@ -313,6 +324,11 @@ function wire() {
   });
 
   $("#aboutBtn").addEventListener("click", () => $("#about").showModal());
+  $("#langBtn").addEventListener("click", () => {
+    I18N.set(I18N.lang === "de" ? "en" : "de");
+    if (lastData) renderStats(lastData);
+    if (JOBS.length) update(true);
+  });
   $("#themeBtn").addEventListener("click", () => {
     const dark = document.documentElement.dataset.theme
       ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
@@ -321,22 +337,25 @@ function wire() {
   });
 }
 
+let lastData = null;
 function renderStats(data) {
+  lastData = data;
   const english = JOBS.filter((j) => germanNeed(j) < 2).length;
   const newToday = JOBS.filter((j) => daysAgo(j.first_seen) === 0).length;
   const updated = new Date(data.updated);
   $("#stats").replaceChildren(...[
-    el("span", {}, el("b", {}, JOBS.length.toLocaleString("en")), " open jobs"),
-    el("span", {}, el("b", {}, english.toLocaleString("en")), " without a German requirement"),
-    newToday && newToday < JOBS.length ? el("span", {}, el("b", {}, newToday), " new today") : null,
-    el("span", {}, "Updated ", updated.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })),
+    el("span", {}, el("b", {}, num(JOBS.length)), t("stats.open")),
+    el("span", {}, el("b", {}, num(english)), t("stats.english")),
+    newToday && newToday < JOBS.length ? el("span", {}, el("b", {}, num(newToday)), t("stats.new")) : null,
+    el("span", {}, t("stats.updated", { d: updated.toLocaleString(I18N.locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) })),
   ].filter(Boolean));
 }
 
 async function main() {
+  I18N.init();
   readURL();
   wire();
-  $("#resultCount").textContent = "Loading jobs…";
+  $("#resultCount").textContent = t("loading");
   try {
     const res = await fetch("data/jobs.json", { cache: "no-cache" });
     if (!res.ok) throw new Error(res.status);
@@ -347,7 +366,7 @@ async function main() {
     renderStats(data);
     update();
   } catch (e) {
-    $("#resultCount").textContent = "Could not load the job list. Please try again in a moment.";
+    $("#resultCount").textContent = t("loadError");
   }
 }
 track("/");

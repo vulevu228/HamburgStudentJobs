@@ -1,13 +1,11 @@
 # Hamburg Student Jobs
 
-**Every Werkstudent, internship, thesis and junior job in Hamburg in one place, updated every morning,
-with an honest answer to the question international students ask first: _do I need German?_**
+**Find the student job in Hamburg that fits you.** Every Werkstudent, internship, thesis, side-job and
+junior role from the Federal Employment Agency, Adzuna, Arbeitnow and company career pages in one place,
+updated every morning, and filterable by field, skills, job type and how much German the ad really asks for.
+The site is available in English and German.
 
 Live site: **https://vulevu228.github.io/HamburgStudentJobs/**
-
-Most job boards show German-only ads to people who searched in English, and hide the language
-requirement deep in the text. This board reads every ad and puts the German requirement on the card,
-so you can filter to the jobs where English is enough.
 
 ## What you can do on the site
 
@@ -18,6 +16,7 @@ so you can filter to the jobs where English is enough.
 - Hide internships that only accept students doing a mandatory internship (Pflichtpraktikum).
 - Save jobs; saved jobs and skills stay in your browser only.
 - Every filter is kept in the URL, so a search can be shared as a link.
+- Switch between English and German at any time (the choice is remembered; `?lang=de` links straight to German).
 - Visits are counted anonymously with [GoatCounter](https://www.goatcounter.com) (no cookies; only the page
   and the events "open ad" / "save job" are sent, never search terms or skills).
 

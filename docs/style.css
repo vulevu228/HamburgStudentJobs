@@ -262,3 +262,31 @@ dialog h2 { margin-top: 0; }
 .attrib a { color: var(--ink-2); display: inline-flex; align-items: center; }
 .attrib img { height: 40px; width: auto; display: block; } /* stacked logo: 40px keeps the wordmark readable */
 .adzuna-word { color: #2e6ca8; font-size: 16px; letter-spacing: -.01em; }
+
+
+/* ---------- language switch ---------- */
+.lang-btn { font-weight: 600; }
+.lang-btn .short { display: none; }
+#aboutBtn .short { display: none; }
+@media (max-width: 520px) {
+  .lang-btn .long, #aboutBtn .long { display: none; }
+  .lang-btn .short { display: inline; }
+  #aboutBtn .short { display: block; }
+  .back-link { display: none; } /* the logo and the footer link lead home */
+  #aboutBtn { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; }
+  .card-foot { flex-wrap: wrap; row-gap: 6px; }
+  .facts { flex-basis: 100%; }
+}
+
+/* ---------- legal pages ---------- */
+.legal { max-width: 760px; padding-top: 32px; padding-bottom: 48px; }
+.legal h1 { font-size: clamp(1.6rem, 3vw, 2.1rem); letter-spacing: -.02em; margin: 0 0 4px; }
+.legal h2 { font-size: 1.1rem; margin: 28px 0 8px; }
+.legal p, .legal li { color: var(--ink-2); }
+.legal ul { padding-left: 20px; }
+.legal .updated { color: var(--ink-3); font-size: 14px; margin: 0 0 20px; }
+.contact-placeholder { background: var(--mid-bg); color: var(--mid); padding: 1px 6px; border-radius: 4px; }
+.storage { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 14px; }
+.storage th, .storage td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.storage th { color: var(--ink-3); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.storage code { font-size: 13px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
