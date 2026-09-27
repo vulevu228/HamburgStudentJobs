@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hamburg Student Jobs</title>
+  <meta name="description" content="Every Werkstudent, internship and thesis job in Hamburg in one place, updated daily, with an honest answer to: do I need German?">
+  <meta property="og:title" content="Hamburg Student Jobs">
+  <meta property="og:description" content="Werkstudent, internship and thesis jobs in Hamburg, updated daily. Filter by how much German you really need.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M9 22V10h3v4.5h8V10h3v12h-3v-4.8h-8V22z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // apply the saved theme before first paint to avoid a flash
+    try { const t = localStorage.getItem("hsj-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#results">Skip to results</a>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="./" aria-label="Hamburg Student Jobs, home">
+        <span class="brand-mark" aria-hidden="true">H</span>
+        <span class="brand-name">Hamburg Student Jobs</span>
+      </a>
+      <nav class="top-actions">
+        <button class="ghost" id="aboutBtn" type="button">How it works</button>
+        <a class="ghost icon-only" href="https://github.com/vulevu228/HamburgStudentJobs" aria-label="Source code on GitHub" title="Source code on GitHub">
+          <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+        <button class="ghost icon-only" id="themeBtn" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <h1>Student jobs in Hamburg, <span class="accent">sorted by how much German you need.</span></h1>
+      <p class="lede">Werkstudent, internship, thesis and junior roles from the Federal Employment Agency and company career pages, updated every morning.</p>
+      <div class="stats" id="stats" aria-live="polite"></div>
+
+      <div class="searchrow">
+        <label class="search">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M10 2a8 8 0 0 1 6.32 12.9l5.39 5.4-1.42 1.4-5.39-5.38A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg>
+          <span class="sr-only">Search jobs</span>
+          <input id="q" type="search" placeholder="Search title, company or skill, e.g. Python, marketing, Airbus" autocomplete="off">
+        </label>
+        <label class="switch big" title="Hide jobs whose ad requires good or fluent German">
+          <input type="checkbox" id="englishOnly">
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+          <span>English is enough</span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap layout">
+    <aside class="filters" id="filters" aria-label="Filters">
+      <div class="filters-head">
+        <h2>Filters</h2>
+        <button class="link" id="resetBtn" type="button">Reset all</button>
+        <button class="ghost icon-only close-filters" id="closeFilters" type="button" aria-label="Close filters">✕</button>
+      </div>
+
+      <fieldset><legend>Job type</legend><div class="chips" id="f-level"></div></fieldset>
+      <fieldset><legend>German needed</legend><div class="options" id="f-german"></div></fieldset>
+      <fieldset><legend>Field</legend><div class="options scroll" id="f-field"></div></fieldset>
+      <fieldset><legend>Work mode</legend><div class="chips" id="f-mode"></div></fieldset>
+      <fieldset>
+        <legend>Posted</legend>
+        <div class="chips" id="f-posted"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Your skills</legend>
+        <p class="hint">Add what you know; jobs that ask for it rank higher and show a match.</p>
+        <div class="skill-input">
+          <input id="skillInput" list="skillList" placeholder="e.g. Python" autocomplete="off" aria-label="Add a skill">
+          <datalist id="skillList"></datalist>
+          <button type="button" id="skillAdd" class="small">Add</button>
+        </div>
+        <div class="chips removable" id="mySkills"></div>
+      </fieldset>
+      <fieldset>
+        <legend>More</legend>
+        <label class="check"><input type="checkbox" id="hideMandatory"> Hide "mandatory internship only"</label>
+        <label class="check"><input type="checkbox" id="savedOnly"> Saved jobs only <span class="count" id="savedCount"></span></label>
+      </fieldset>
+    </aside>
+
+    <section class="results" id="results" aria-label="Job results">
+      <div class="results-head">
+        <button class="filter-toggle" id="openFilters" type="button">Filters <span id="activeCount" class="badge-count"></span></button>
+        <p id="resultCount" aria-live="polite"></p>
+        <label class="sort">
+          <span>Sort</span>
+          <select id="sort">
+            <option value="new">Newest first</option>
+            <option value="match">Best skill match</option>
+            <option value="company">Company A–Z</option>
+          </select>
+        </label>
+      </div>
+      <div class="active-filters" id="activeFilters"></div>
+      <ol class="cards" id="cards"></ol>
+      <div class="more"><button id="moreBtn" type="button" class="secondary" hidden>Show more</button></div>
+      <div class="empty" id="empty" hidden>
+        <h3>No jobs match these filters</h3>
+        <p>Try removing a filter, or turn off "English is enough".</p>
+        <button type="button" class="secondary" id="emptyReset">Reset filters</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <p>Job data from the <a href="https://www.arbeitsagentur.de/jobsuche/">Bundesagentur für Arbeit</a> and public company career pages. Titles and links point to the original ads; always read the full ad before applying.</p>
+      <p>Summaries and language levels are written by AI (Claude) and can be wrong. Built by <a href="https://vulevu228.github.io/">Emir Avni Sahin</a> · <a href="https://github.com/vulevu228/HamburgStudentJobs">source on GitHub</a></p>
+    </div>
+  </footer>
+
+  <dialog id="about" aria-labelledby="aboutTitle">
+    <form method="dialog" class="dialog-close"><button class="ghost icon-only" aria-label="Close">✕</button></form>
+    <h2 id="aboutTitle">How it works</h2>
+    <ol class="steps">
+      <li><strong>Collect.</strong> Every morning a script asks the Federal Employment Agency's job search and the career pages of Hamburg employers for student-level jobs: Werkstudent, internship, thesis, junior and trainee roles.</li>
+      <li><strong>Read.</strong> Each new ad is read once. Rules pick out the job type, skills, hours and work mode; an AI model (Claude) writes a short English summary and judges how much German and English the ad really asks for, even when the ad itself is in German.</li>
+      <li><strong>Publish.</strong> The result is one file of jobs that this page filters right in your browser. Ads that disappear from their source are removed after a few days.</li>
+    </ol>
+    <h3>"German needed" explained</h3>
+    <ul class="legend">
+      <li><span class="lang-pill l0">Not needed</span> The ad does not ask for German, or says it isn't required.</li>
+      <li><span class="lang-pill l1">Basic / a plus</span> Some German helps, or it is listed as nice to have.</li>
+      <li><span class="lang-pill l2">Required</span> Good or fluent German is required, or the ad is written in German only.</li>
+    </ul>
+    <p class="hint">Nothing you enter here leaves your browser. Saved jobs and skills are stored only on this device.</p>
+  </dialog>
+
+  <template id="cardTpl">
+    <li class="card">
+      <div class="card-top">
+        <div class="card-titles">
+          <h3 class="title"><a target="_blank" rel="noopener"></a></h3>
+          <p class="meta"><span class="company"></span><span class="dot">·</span><span class="loc"></span></p>
+        </div>
+        <button class="save" type="button" aria-pressed="false" title="Save this job">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
+          <span class="sr-only">Save</span>
+        </button>
+      </div>
+      <div class="badges"></div>
+      <p class="summary"></p>
+      <ul class="reqs"></ul>
+      <div class="skills"></div>
+      <div class="card-foot">
+        <span class="facts"></span>
+        <a class="view" target="_blank" rel="noopener">View ad <span aria-hidden="true">↗</span></a>
+      </div>
+    </li>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
