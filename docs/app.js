@@ -366,7 +366,8 @@ async function main() {
     renderStats(data);
     update();
   } catch (e) {
-    $("#resultCount").textContent = t("loadError");
+    // opened by double-click (file://): browsers block loading data/jobs.json that way
+    $("#resultCount").textContent = location.protocol === "file:" ? t("loadErrorFile") : t("loadError");
   }
 }
 track("/");

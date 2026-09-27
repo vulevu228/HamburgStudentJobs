@@ -71,6 +71,7 @@ const STRINGS = {
     // dynamic
     "loading": "Loading jobs…",
     "loadError": "Could not load the job list. Please try again in a moment.",
+    "loadErrorFile": "This page was opened as a local file, and browsers block loading the job list that way. Open https://vulevu228.github.io/HamburgStudentJobs/ or run: python -m http.server -d docs 8000",
     "count.one": "1 job",
     "count.many": "{n} jobs",
     "stats.open": " open jobs",
@@ -193,6 +194,7 @@ const STRINGS = {
 
     "loading": "Jobs werden geladen …",
     "loadError": "Die Jobliste konnte nicht geladen werden. Bitte versuche es gleich noch einmal.",
+    "loadErrorFile": "Diese Seite wurde als lokale Datei geöffnet, und Browser blockieren so das Laden der Jobliste. Öffne https://vulevu228.github.io/HamburgStudentJobs/ oder starte: python -m http.server -d docs 8000",
     "count.one": "1 Job",
     "count.many": "{n} Jobs",
     "stats.open": " offene Jobs",
