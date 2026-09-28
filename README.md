@@ -5,7 +5,7 @@ junior role from the Federal Employment Agency, Adzuna, Arbeitnow and company ca
 updated every morning, and filterable by field, skills, job type and how much German the ad really asks for.
 The site is available in English and German.
 
-Live site: **https://vulevu228.github.io/HamburgStudentJobs/**
+Live site: **https://hamburgstudentjobs.de/**
 
 ## What you can do on the site
 
