@@ -290,14 +290,25 @@ def src_adzuna(terms, city, radius_km, app_id, app_key, budget, max_days_old=Non
 def src_jsearch(queries, city, api_key, budget, date_posted="3days"):
     """JSearch (OpenWeb Ninja): Google for Jobs results, i.e. ads from LinkedIn, StepStone, Indeed and
     company sites. Free plan: 200 requests/month, hard limit - one request per query (10 ads), never paged."""
-    out, seen = [], set()
+    # the same API is sold directly and through RapidAPI, with different addresses and key headers;
+    # a key from either works: on a refusal the other one is tried (refused calls cost no quota)
+    providers = [("OpenWeb Ninja", "https://api.openwebninja.com/jsearch/search", {"x-api-key": api_key}),
+                 ("RapidAPI", "https://jsearch.p.rapidapi.com/search",
+                  {"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": "jsearch.p.rapidapi.com"})]
+    out, seen, refused = [], set(), []
     for q in queries:
         if not budget.take():
             break
-        r = requests.get("https://api.openwebninja.com/jsearch/search", headers={**UA, "x-api-key": api_key}, timeout=40,
-                         params={"query": q, "country": "de", "date_posted": date_posted, "num_pages": 1})
-        if r.status_code in (401, 403):
-            raise RuntimeError(f"JSearch rejected the key (HTTP {r.status_code})")
+        while True:
+            name, url, auth = providers[0]
+            r = requests.get(url, headers={**UA, **auth}, timeout=40,
+                             params={"query": q, "country": "de", "date_posted": date_posted, "num_pages": 1})
+            if r.status_code not in (401, 403):
+                break
+            refused.append(f"{name} HTTP {r.status_code}")
+            providers.pop(0)
+            if not providers:
+                raise RuntimeError(f"JSearch rejected the key ({', '.join(refused)})")
         if r.status_code == 429:
             raise RuntimeError("JSearch quota used up for this month (HTTP 429)")
         r.raise_for_status()
