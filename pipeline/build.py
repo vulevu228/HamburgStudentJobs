@@ -52,7 +52,7 @@ def collect(known):
                                                      budget, None if first else 3, 7 if first else 2)))
     else:
         print("  Adzuna           skipped (no ADZUNA_APP_ID / ADZUNA_APP_KEY)")
-    if key := os.environ.get("JSEARCH_API_KEY"):
+    if key := (os.environ.get("JSEARCH_API_KEY") or "").strip():  # a pasted secret can carry spaces/newlines
         # first run looks back a month; afterwards the last 3 days are enough
         first = not any(r["source"] == "JSearch" for r in known.values())
         budget = sources.CallBudget(catalog.JSEARCH_DAILY_CALLS)
