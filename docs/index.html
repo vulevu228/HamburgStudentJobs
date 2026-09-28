@@ -8,8 +8,8 @@
   <meta property="og:title" content="Hamburg Student Jobs">
   <meta property="og:description" content="Every student job in Hamburg in one place. Filter by field, skills, job type and how much German you need – updated every morning. Also in German.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://vulevu228.github.io/HamburgStudentJobs/">
-  <meta property="og:image" content="https://vulevu228.github.io/HamburgStudentJobs/og.png">
+  <meta property="og:url" content="https://hamburgstudentjobs.de/">
+  <meta property="og:image" content="https://hamburgstudentjobs.de/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Hamburg Student Jobs: find the student job in Hamburg that fits you">
@@ -43,47 +43,63 @@
     </div>
   </header>
 
-  <section class="hero">
-    <div class="wrap">
-      <div class="hero-grid">
-        <div class="hero-text">
-          <h1 data-i18n-html="hero.title">Student jobs in Hamburg <span class="accent">that fit you.</span></h1>
-          <p class="lede" data-i18n="hero.lede">Every Werkstudent, internship, thesis, side-job and junior role in one place. Filter by field, skills, job type and how much German you need – updated every morning.</p>
-          <div class="stats" id="stats" aria-live="polite"></div>
-        </div>
-        <!-- Hamburg skyline: Elbphilharmonie, St. Michaelis tower, harbour crane, containers -->
-        <svg class="hero-art" viewBox="0 0 460 230" role="img" aria-label="Line drawing of the Hamburg harbour skyline" data-i18n-attr="aria-label:hero.art">
-          <g class="sky">
-            <circle cx="300" cy="52" r="18" class="sun"/>
-            <path d="M48 52h34M58 44h30M404 22h26M396 30h40" class="cloud"/>
-          </g>
-          <!-- Elbphilharmonie -->
-          <path d="M34 104 Q62 76 90 96 Q118 66 146 92 Q170 72 196 100 L196 184 L34 184 Z" class="glass"/>
-          <path d="M34 124h162M34 140h162M34 156h162" class="line thin"/>
-          <path d="M62 104v24M96 98v26M130 96v28M164 98v26" class="line thin"/>
-          <rect x="34" y="160" width="162" height="24" class="brick"/>
-          <path d="M34 104 Q62 76 90 96 Q118 66 146 92 Q170 72 196 100" class="line"/>
-          <!-- St. Michaelis tower -->
-          <path d="M226 184V112h26v72M230 112V92h18v20M233 92V74h12v18M239 74V38" class="line"/>
-          <path d="M233 74 L239 54 L245 74" class="line"/>
-          <circle cx="239" cy="102" r="5" class="line"/>
-          <!-- containers -->
-          <rect x="270" y="164" width="36" height="20" class="box c1"/>
-          <rect x="306" y="164" width="36" height="20" class="box c2"/>
-          <rect x="288" y="144" width="36" height="20" class="box c3"/>
-          <rect x="342" y="164" width="36" height="20" class="box c3"/>
-          <!-- harbour crane -->
-          <path d="M392 184V70M412 184V70M392 70l20 0M392 100l20 0M392 130l20 0M392 160l20 0M392 70l20 30M412 100l-20 30M392 130l20 30" class="line"/>
-          <path d="M330 70h120M330 70l62-22M450 70l-38-22M392 48h20" class="line"/>
+  <!-- intro: stays in place on large screens while the job board slides up over it -->
+  <section class="hero" id="hero">
+    <div class="hero-inner">
+      <div class="eyebrow"><span class="live" aria-hidden="true"></span><span id="heroUpdated" data-i18n="hero.eyebrow">Updated every morning</span></div>
+      <h1><span data-i18n="hero.title1">Student jobs in Hamburg</span><br><span class="grad-text" data-i18n="hero.title2">that fit you.</span></h1>
+      <p class="lede" data-i18n="hero.lede">Every Werkstudent, internship, thesis, side-job and junior role in one place. Filter by field, skills, job type and how much German you need – updated every morning.</p>
+      <div class="hero-live" id="stats" aria-live="polite"></div>
+      <p class="quick-label" data-i18n="hero.quick">Jump straight in:</p>
+      <div class="hero-quick" id="heroQuick"></div>
+      <div class="hero-feats">
+        <div><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h9M4 10h6"/><path d="M14 9l3-5 3 5M15 7.5h4"/><path d="M5 20l4-8 4 8M6.2 17.5h5.6"/></svg><span data-i18n="hero.f1">Filter by language</span></b><span data-i18n="hero.f1s">Only English, English and German, or only German – see at once what you can apply for.</span></div>
+        <div><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span data-i18n="hero.f2">Match your skills</span></b><span data-i18n="hero.f2s">Add what you know. Jobs that ask for it move up and show the match.</span></div>
+        <div><b><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span data-i18n="hero.f3">Fresh every morning</span></b><span data-i18n="hero.f3s">Federal Employment Agency, Adzuna and Hamburg company career pages, in one list.</span></div>
+      </div>
+    </div>
+
+    <!-- Hamburg skyline: Elbphilharmonie, St. Michaelis tower, harbour crane, containers -->
+    <div class="hero-skyline" aria-hidden="true">
+      <svg class="hero-art draw" viewBox="0 0 460 230" preserveAspectRatio="xMidYMax meet">
+        <g class="sky">
+          <circle cx="300" cy="52" r="18" class="sun"/>
+          <path d="M48 52h34M58 44h30M404 22h26M396 30h40" class="cloud"/>
+        </g>
+        <!-- Elbphilharmonie -->
+        <path d="M34 104 Q62 76 90 96 Q118 66 146 92 Q170 72 196 100 L196 184 L34 184 Z" class="glass fill"/>
+        <path d="M34 124h162M34 140h162M34 156h162" class="line thin" pathLength="1"/>
+        <path d="M62 104v24M96 98v26M130 96v28M164 98v26" class="line thin" pathLength="1"/>
+        <rect x="34" y="160" width="162" height="24" class="brick fill"/>
+        <path d="M34 104 Q62 76 90 96 Q118 66 146 92 Q170 72 196 100" class="line" pathLength="1"/>
+        <!-- St. Michaelis tower -->
+        <path d="M226 184V112h26v72M230 112V92h18v20M233 92V74h12v18M239 74V38" class="line" pathLength="1"/>
+        <path d="M233 74 L239 54 L245 74" class="line" pathLength="1"/>
+        <circle cx="239" cy="102" r="5" class="line" pathLength="1"/>
+        <!-- containers -->
+        <rect x="270" y="164" width="36" height="20" class="box c1 fill"/>
+        <rect x="306" y="164" width="36" height="20" class="box c2 fill"/>
+        <rect x="288" y="144" width="36" height="20" class="box c3 fill"/>
+        <rect x="342" y="164" width="36" height="20" class="box c3 fill"/>
+        <!-- harbour crane with a swinging load -->
+        <path d="M392 184V70M412 184V70M392 70l20 0M392 100l20 0M392 130l20 0M392 160l20 0M392 70l20 30M412 100l-20 30M392 130l20 30" class="line" pathLength="1"/>
+        <path d="M330 70h120M330 70l62-22M450 70l-38-22M392 48h20" class="line" pathLength="1"/>
+        <g class="load">
           <path d="M352 70v42" class="line thin"/>
           <rect x="344" y="112" width="16" height="10" class="box c2"/>
-          <!-- water -->
-          <path d="M10 196 q12 -8 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0" class="water"/>
-          <path d="M40 212 q12 -6 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0" class="water thin"/>
-          <path d="M10 184h440" class="line"/>
-        </svg>
-      </div>
+        </g>
+        <path d="M10 184h440" class="line" pathLength="1"/>
+      </svg>
+      <div class="hero-water"></div>
+    </div>
 
+    <a class="hero-go" href="#stage"><span id="heroCta" data-i18n="hero.cta">Browse the jobs</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
+  </section>
+
+  <!-- the job board slides up over the intro -->
+  <div class="stage" id="stage">
+  <div class="searchbar">
+    <div class="wrap">
       <div class="searchrow">
         <label class="search">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M10 2a8 8 0 0 1 6.32 12.9l5.39 5.4-1.42 1.4-5.39-5.38A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg>
@@ -97,7 +113,7 @@
         </label>
       </div>
     </div>
-  </section>
+  </div>
 
   <main class="wrap layout">
     <aside class="filters" id="filters" aria-label="Filters" data-i18n-attr="aria-label:filters.aria">
@@ -161,6 +177,9 @@
         <button type="button" class="secondary" id="emptyReset" data-i18n="empty.reset">Reset filters</button>
       </div>
     </section>
+
+    <!-- knowledge cards: beside the results on wide screens, below them otherwise -->
+    <aside class="rail" id="rail" aria-label="Good to know" data-i18n-attr="aria-label:rail.aria"></aside>
   </main>
 
   <footer class="footer">
@@ -169,6 +188,7 @@
       <p data-i18n-html="footer.note"></p>
     </div>
   </footer>
+  </div>
 
   <dialog id="about" aria-labelledby="aboutTitle">
     <form method="dialog" class="dialog-close"><button class="ghost icon-only" aria-label="Close" data-i18n-attr="aria-label:close">✕</button></form>

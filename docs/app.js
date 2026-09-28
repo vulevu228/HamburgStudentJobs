@@ -350,15 +350,92 @@ function wire() {
 let lastData = null;
 function renderStats(data) {
   lastData = data;
-  const english = JOBS.filter((j) => germanNeed(j) < 2).length;
+  const english = JOBS.filter((j) => germanNeed(j) === 0).length;  // same count as the "Only English" filter
   const newToday = JOBS.filter((j) => daysAgo(j.first_seen) === 0).length;
   const updated = new Date(data.updated);
+  const when = daysAgo(data.updated.slice(0, 10)) === 0
+    ? t("hero.updatedToday", { time: updated.toLocaleTimeString(I18N.locale(), { hour: "2-digit", minute: "2-digit" }) })
+    : t("stats.updated", { d: updated.toLocaleString(I18N.locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) });
+  $("#heroUpdated").textContent = when;
+  $("#heroCta").textContent = t("hero.ctaN", { n: num(JOBS.length) });
   $("#stats").replaceChildren(...[
-    el("span", {}, el("b", {}, num(JOBS.length)), t("stats.open")),
-    el("span", {}, el("b", {}, num(english)), t("stats.english")),
-    newToday && newToday < JOBS.length ? el("span", {}, el("b", {}, num(newToday)), t("stats.new")) : null,
-    el("span", {}, t("stats.updated", { d: updated.toLocaleString(I18N.locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) })),
+    el("span", { class: "chip-live" }, el("b", {}, num(JOBS.length)), t("stats.open")),
+    el("span", { class: "chip-live" }, el("b", {}, num(english)), t("stats.english")),
+    newToday && newToday < JOBS.length ? el("span", { class: "chip-live" }, el("b", {}, num(newToday)), t("stats.new")) : null,
   ].filter(Boolean));
+  renderQuick();
+  renderRail();
+}
+
+// ---------------------------------------------------------------- intro shortcuts
+// each one starts from a clean board with a single filter, then scrolls down to the results
+function jumpTo(apply) {
+  Object.assign(state, { q: "", english: false, levels: new Set(), speak: new Set(), fields: new Set(), modes: new Set(),
+    posted: "", hideMandatory: false, savedOnly: false });
+  $("#q").value = ""; $("#englishOnly").checked = false; $("#hideMandatory").checked = false; $("#savedOnly").checked = false;
+  apply();
+  $("#englishOnly").checked = state.english;
+  update();
+  $("#stage").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+function renderQuick() {
+  const n = (pred) => num(JOBS.filter(pred).length);
+  const q = (label, count, apply) => el("button", { type: "button", onclick: () => jumpTo(apply) }, label, el("span", { class: "n" }, count));
+  $("#heroQuick").replaceChildren(
+    q(t("speak.en"), n((j) => speakOf(j) === "en"), () => state.speak.add("en")),
+    q(levelName("Werkstudent"), n((j) => j.level === "Werkstudent"), () => state.levels.add("Werkstudent")),
+    q(levelName("Internship"), n((j) => j.level === "Internship"), () => state.levels.add("Internship")),
+    q(levelName("Thesis"), n((j) => j.level === "Thesis"), () => state.levels.add("Thesis")),
+    q(t("hero.quickWeek"), n((j) => daysAgo(j.posted) <= 7), () => { state.posted = "7"; }),
+  );
+}
+
+// ---------------------------------------------------------------- knowledge rail
+const ICON = {
+  pulse: '<path d="M3 12h4l2-6 4 12 2-6h6"/>',
+  types: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/>',
+  tips: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+};
+function infoCard(icon, title, ...body) {
+  const h = el("h3", {}); h.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[icon]}</svg>`; h.append(title);
+  return el("section", { class: "info-card" }, h, ...body);
+}
+// trusted markup from i18n.js only
+const html = (key) => { const d = el("div"); d.innerHTML = t(key); return [...d.childNodes]; };
+function topList(entries, onpick, label) {
+  const max = entries[0] ? entries[0][1] : 1;
+  return el("ul", { class: "bars" }, entries.map(([k, n]) => {
+    const bar = el("span", { class: "bar" }, el("i", { style: `width:${Math.max(4, (n / max) * 100)}%` }));
+    return el("li", {}, el("button", { type: "button", onclick: () => jumpTo(() => onpick(k)) },
+      el("span", { class: "name" }, label(k)), el("span", { class: "n" }, num(n)), bar));
+  }));
+}
+function renderRail() {
+  const count = (key) => { const m = new Map(); JOBS.forEach((j) => { const k = key(j); if (k) m.set(k, (m.get(k) || 0) + 1); }); return [...m].sort((a, b) => b[1] - a[1]); };
+  const week = JOBS.filter((j) => daysAgo(j.posted) <= 7).length;  // posting date: first_seen is the board's own history
+  const flexible = JOBS.filter((j) => j.work_mode === "Remote" || j.work_mode === "Hybrid").length;
+  const english = JOBS.filter((j) => speakOf(j) === "en").length;
+  const companies = count((j) => j.company).slice(0, 6);
+  const fields = count((j) => j.field !== "Other" && j.field).slice(0, 6);
+  const fact = (v, k) => el("div", {}, el("div", { class: "v" }, v), el("div", { class: "k" }, k));
+  const pct = JOBS.length ? Math.round((english / JOBS.length) * 100) : 0;
+
+  $("#rail").replaceChildren(
+    el("div", { class: "rail-title" }, t("rail.title")),
+    infoCard("pulse", t("rail.nowTitle"),
+      el("div", { class: "kfacts" },
+        fact(num(week), t("rail.newWeek")), fact(`${pct} %`, t("rail.onlyEnglish")),
+        fact(num(flexible), t("rail.flexible")), fact(num(count((j) => j.company).length), t("rail.employers"))),
+      el("p", {}, el("b", {}, t("rail.topCompanies"))),
+      topList(companies, (c) => { state.q = norm(c); $("#q").value = c; }, (c) => c),
+      el("p", { style: "margin-top:12px" }, el("b", {}, t("rail.topFields"))),
+      topList(fields, (f) => state.fields.add(f), fieldName)),
+    infoCard("types", t("rail.typesTitle"), el("dl", { class: "types" }, ...html("rail.types")),
+      el("p", { class: "small-print" }, t("rail.legal"))),
+    infoCard("globe", t("rail.intlTitle"), ...html("rail.intl")),
+    infoCard("tips", t("rail.tipsTitle"), ...html("rail.tips")),
+  );
 }
 
 async function main() {
@@ -375,6 +452,10 @@ async function main() {
     $("#skillList").replaceChildren(...vocab.map((s) => el("option", { value: s })));
     renderStats(data);
     update();
+    // a shared link with filters goes straight to the results instead of the intro
+    if ([...new URLSearchParams(location.search).keys()].some((k) => k !== "lang")) {
+      $("#stage").scrollIntoView({ behavior: "auto" });
+    }
   } catch (e) {
     // opened by double-click (file://): browsers block loading data/jobs.json that way
     $("#resultCount").textContent = location.protocol === "file:" ? t("loadErrorFile") : t("loadError");
