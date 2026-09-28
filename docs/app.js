@@ -7,6 +7,12 @@ const LEVELS = ["Werkstudent", "Internship", "Thesis", "Student side job", "Juni
 const SPEAK = ["en", "both", "de"];  // working language: only English / English and German / only German
 const MODES = ["Remote", "Hybrid", "Onsite", "Not stated"];
 const POSTED = ["", "1", "7", "30"];
+const AREAS = ["hh", "around", "remote"];  // Hamburg itself / towns around it / remote jobs based elsewhere
+// feedback form -> Azure Function (feedback/ in the repo; only accepts posts from the live domain).
+// Local runs use `func start --port 7079` instead. Empty = form hidden.
+const FEEDBACK_URL = location.hostname === "localhost" ? "http://localhost:7079/api/feedback"
+  : "https://hsj-feedback-emir.azurewebsites.net/api/feedback";
+const FB_KINDS = ["question", "idea", "criticism", "bug", "job", "employer", "other"];
 // display names (data values stay English)
 const levelName = (l) => t(`level.${l}`);
 const fieldName = (f) => t(`field.${f}`);
@@ -21,11 +27,22 @@ const store = {
 let JOBS = [];
 let shown = PAGE;
 const saved = new Set(store.get("hsj-saved", []));
-const state = {
-  q: "", english: false, levels: new Set(), speak: new Set(), fields: new Set(), modes: new Set(),
-  posted: "", hideMandatory: false, savedOnly: false, sort: "new",
-  skills: store.get("hsj-skills", []),
-};
+const applied = new Set(store.get("hsj-applied", []));
+const hidden = new Set(store.get("hsj-hidden", []));
+// filters that "Reset all" clears (sort and skills stay)
+const cleanFilters = () => ({ q: "", english: false, levels: new Set(), speak: new Set(), fields: new Set(), modes: new Set(),
+  areas: new Set(), company: "", posted: "", hideMandatory: false, payOnly: false, savedOnly: false, appliedOnly: false, showHidden: false });
+const state = { ...cleanFilters(), sort: "new", skills: store.get("hsj-skills", []) };
+
+// day of the previous visit (local date), so jobs the board found since then can be marked
+const TODAY = new Date().toLocaleDateString("sv-SE");
+const lastVisit = (() => {
+  const v = store.get("hsj-visit", null);
+  if (!v || !v.cur) { store.set("hsj-visit", { cur: TODAY, prev: null }); return null; }
+  if (v.cur !== TODAY) { store.set("hsj-visit", { cur: TODAY, prev: v.cur }); return v.cur; }
+  return v.prev || null;
+})();
+const newSinceVisit = (j) => Boolean(lastVisit && j.first_seen > lastVisit);
 
 // Anonymous usage counts (GoatCounter, no cookies). Only fixed paths/event names are sent - never the
 // query string, search text or skills. Silently does nothing if the counter is blocked.
@@ -60,6 +77,25 @@ function germanText(j) {
   return t(n === 0 ? "gtext.notMentioned" : n === 1 ? "gtext.plus" : "gtext.required");
 }
 const modeOf = (j) => j.work_mode || "Not stated";
+// "Remote, Germany (Berlin)" -> remote; "Braak bei Hamburg", "Hamburg (Stade)" -> around; "Hamburg (3 Locations)" -> hh
+function areaOf(j) {
+  const l = j.location || "Hamburg";
+  if (/^remote\b/i.test(l)) return "remote";
+  return /hamburg/i.test(l) && !/\bbei hamburg|\bbz\.? hamburg|^hamburg \((?!\d)/i.test(l) ? "hh" : "around";
+}
+// sources write places differently: "Hamburg, , Germany", "Ahrensburg, Stormarn (Kreis)", "Hamburg / Hamburg"
+function placeOf(j) {
+  return (j.location || "Hamburg").replace(/(,\s*)+(Deutschland|Germany)$/i, "").replace(/,\s*HH$/, "")
+    .replace(/,\s*(Kreis [^,]+|[^,]+ \(Kreis\))$/, "").replace(/^Hamburg \/ Hamburg$/, "Hamburg")
+    .replace(/^Remote, Germany \((.+)\)$/, "Remote ($1)");
+}
+// "15-15 EUR/h" -> "15 €/h", "14-18 EUR/h" -> "14–18 €/h", "45000-55000 EUR" -> "45000–55000 €"
+function payText(p) {
+  if (!p) return "";
+  const s = p.replace(/(\d[\d.,]*)\s*-\s*\1(?![\d.,])/, "$1").replace(/(\d)\s*-\s*(\d)/g, "$1–$2");
+  if (I18N.lang === "de") return detail(s).replace(/ EUR$/, " €");
+  return s.replace(/EUR\/h\b/, "€/h").replace(/EUR\/yr\b/, "€/year").replace(/ EUR$/, " €");
+}
 const daysAgo = (iso) => Math.max(0, Math.round((Date.now() - new Date(iso + "T00:00:00").getTime()) / 864e5));
 function ago(iso) {
   const d = daysAgo(iso);
@@ -103,14 +139,21 @@ function passes(j, skip) {
     const hay = j._hay;
     if (!state.q.split(/\s+/).every((w) => hay.includes(w))) return false;
   }
+  if (!state.showHidden && hidden.has(j.id)) return false;
   if (state.english && germanNeed(j) === 2) return false;
   if (skip !== "levels" && state.levels.size && !state.levels.has(j.level)) return false;
   if (skip !== "speak" && state.speak.size && !state.speak.has(speakOf(j))) return false;
+  if (skip !== "areas" && state.areas.size && !state.areas.has(areaOf(j))) return false;
   if (skip !== "fields" && state.fields.size && !state.fields.has(j.field)) return false;
   if (skip !== "modes" && state.modes.size && !state.modes.has(modeOf(j))) return false;
-  if (skip !== "posted" && state.posted && daysAgo(j.posted) > Number(state.posted) - (state.posted === "1" ? 1 : 0)) return false;
+  if (skip !== "posted" && state.posted) {
+    if (state.posted === "visit" ? !newSinceVisit(j) : daysAgo(j.posted) > Number(state.posted) - (state.posted === "1" ? 1 : 0)) return false;
+  }
+  if (state.company && j.company !== state.company) return false;
+  if (skip !== "pay" && state.payOnly && !j.pay) return false;
   if (state.hideMandatory && j.mandatory) return false;
   if (state.savedOnly && !saved.has(j.id)) return false;
+  if (state.appliedOnly && !applied.has(j.id)) return false;
   return true;
 }
 function results() {
@@ -152,6 +195,9 @@ function renderFilters() {
       el("span", { class: `lang-pill ${SPEAK_CLASS[g]}` }, t(`speak.${g}`)), el("span", { class: "n" }, num(n)));
   }));
 
+  $("#f-area").replaceChildren(...AREAS.map((a) =>
+    chip(t(`area.${a}`), state.areas.has(a), () => { toggle(state.areas, a); update(); }, countWhere("areas", (j) => areaOf(j) === a))));
+
   const fields = [...new Set(JOBS.map((j) => j.field))]
     .sort((a, b) => (a === "Other") - (b === "Other") || fieldName(a).localeCompare(fieldName(b), I18N.locale()));
   $("#f-field").replaceChildren(...fields.map((f) => {
@@ -164,15 +210,22 @@ function renderFilters() {
   $("#f-mode").replaceChildren(...MODES.map((m) =>
     chip(modeName(m), state.modes.has(m), () => { toggle(state.modes, m); update(); }, countWhere("modes", (j) => modeOf(j) === m))));
 
+  // "since your last visit" only exists for returning visitors
+  const nVisit = lastVisit ? countWhere("posted", newSinceVisit) : 0;
   $("#f-posted").replaceChildren(...POSTED.map((p) =>
-    chip(t(`posted.${p}`), state.posted === p, () => { state.posted = p; update(); })));
+    chip(t(`posted.${p}`), state.posted === p, () => { state.posted = p; update(); })),
+    nVisit || state.posted === "visit" ? chip(t("posted.visit"), state.posted === "visit", () => { state.posted = "visit"; update(); }, num(nVisit)) : null);
 
   $("#mySkills").replaceChildren(...state.skills.map((s) =>
     el("button", { type: "button", class: "chip", title: t("remove.skill", { s }), onclick: () => {
       state.skills = state.skills.filter((x) => x !== s); store.set("hsj-skills", state.skills); update();
     } }, s)));
 
+  $("#payCount").textContent = `(${num(countWhere("pay", (j) => Boolean(j.pay)))})`;
   $("#savedCount").textContent = saved.size ? `(${saved.size})` : "";
+  $("#appliedCount").textContent = applied.size ? `(${applied.size})` : "";
+  $("#hiddenCount").textContent = hidden.size ? `(${hidden.size})` : "";
+  $("#hiddenRow").hidden = !hidden.size && !state.showHidden;
 }
 
 function activeChips() {
@@ -182,11 +235,17 @@ function activeChips() {
   if (state.english) add(t("english.switch"), () => { state.english = false; });
   state.levels.forEach((l) => add(levelName(l), () => state.levels.delete(l)));
   state.speak.forEach((g) => add(t(`speak.${g}`), () => state.speak.delete(g)));
+  state.areas.forEach((a) => add(t(`area.${a}`), () => state.areas.delete(a)));
   state.fields.forEach((f) => add(fieldName(f), () => state.fields.delete(f)));
   state.modes.forEach((m) => add(modeName(m), () => state.modes.delete(m)));
-  if (state.posted) add(t("chip.posted", { l: t(`posted.${state.posted}`) }), () => { state.posted = ""; });
-  if (state.hideMandatory) add(t("chip.noMandatory"), () => { state.hideMandatory = false; });
-  if (state.savedOnly) add(t("chip.saved"), () => { state.savedOnly = false; });
+  if (state.company) add(t("chip.company", { c: state.company }), () => { state.company = ""; });
+  if (state.posted === "visit") add(t("chip.visit"), () => { state.posted = ""; });
+  else if (state.posted) add(t("chip.posted", { l: t(`posted.${state.posted}`) }), () => { state.posted = ""; });
+  if (state.payOnly) add(t("chip.pay"), () => { state.payOnly = false; $("#payOnly").checked = false; });
+  if (state.hideMandatory) add(t("chip.noMandatory"), () => { state.hideMandatory = false; $("#hideMandatory").checked = false; });
+  if (state.savedOnly) add(t("chip.saved"), () => { state.savedOnly = false; $("#savedOnly").checked = false; });
+  if (state.appliedOnly) add(t("chip.applied"), () => { state.appliedOnly = false; $("#appliedOnly").checked = false; });
+  if (state.showHidden) add(t("chip.hidden"), () => { state.showHidden = false; $("#showHidden").checked = false; });
   return out;
 }
 
@@ -194,19 +253,25 @@ const tpl = $("#cardTpl");
 function card(j) {
   const c = tpl.content.firstElementChild.cloneNode(true);
   const a = c.querySelector(".title a"); a.href = j.url; a.textContent = j.title;
-  c.querySelector(".company").textContent = j.company || t("company.none");
+  const co = c.querySelector(".company");
+  if (j.company) {
+    co.replaceWith(el("button", { type: "button", class: "company", title: t("company.filter", { c: j.company }), onclick: () => {
+      state.company = j.company; update(); $("#stage").scrollIntoView({ behavior: "auto" });
+    } }, j.company));
+  } else co.textContent = t("company.none");
   const av = c.querySelector(".avatar"); av.textContent = initials(j.company); av.style.setProperty("--h", hue(j.company));
-  c.querySelector(".loc").textContent = j.location || "Hamburg";
+  c.querySelector(".loc").textContent = placeOf(j);
 
   const save = c.querySelector(".save");
   const setSave = () => { const on = saved.has(j.id); save.setAttribute("aria-pressed", String(on)); save.title = on ? t("save.remove") : t("save.add"); };
   setSave();
   save.addEventListener("click", () => { if (!saved.has(j.id)) track("save-job", true); toggle(saved, j.id); store.set("hsj-saved", [...saved]); setSave(); renderFilters(); if (state.savedOnly) update(); });
 
-  const need = germanNeed(j);
+  const fresh = lastVisit ? newSinceVisit(j) : daysAgo(j.first_seen) <= 1 && daysAgo(j.posted) <= 3;
   const badges = [
-    daysAgo(j.first_seen) <= 1 && daysAgo(j.posted) <= 3 ? el("span", { class: "badge new" }, t("badge.new")) : null,
+    fresh ? el("span", { class: "badge new", title: lastVisit ? t("badge.visit") : null }, t("badge.new")) : null,
     el("span", { class: "badge level" }, levelName(j.level)),
+    j.pay ? el("span", { class: "badge pay" }, payText(j.pay)) : null,
     el("span", { class: `lang-pill ${SPEAK_CLASS[speakOf(j)]}`, title: germanText(j) }, t(`speak.${speakOf(j)}`)),
     el("span", { class: "badge" }, fieldName(j.field)),
     j.work_mode ? el("span", { class: "badge" }, modeName(j.work_mode)) : null,
@@ -222,16 +287,129 @@ function card(j) {
   c.querySelector(".skills").replaceChildren(...skills.slice(0, 10).map((s) => el("span", { class: "skill" + (hits.has(s) ? " hit" : "") }, s)));
 
   const facts = [t("fact.posted", { ago: ago(j.posted) }), j.copies > 1 && t("fact.copies", { n: j.copies }),
-    detail(j.hours), detail(j.pay), detail(j.duration), j.start && t("fact.start", { d: detail(j.start) })].filter(Boolean);
+    detail(j.hours), detail(j.duration), j.start && t("fact.start", { d: detail(j.start) })].filter(Boolean);
   if (hits.size) facts.unshift(hits.size === 1 ? t("fact.matches.one") : t("fact.matches.many", { n: hits.size }));
   c.querySelector(".facts").textContent = facts.join(" · ");
   const view = c.querySelector(".view"); view.href = j.url;
   const opened = () => track("open-ad", true);
   view.addEventListener("click", opened); a.addEventListener("click", opened);
   view.setAttribute("aria-label", t("view.aria", { t: j.title }));
-  view.firstChild.textContent = (j.source === "Company Site" ? t("view.company") : t("view.source", { s: j.source })) + " ";
+  // JSearch ads open on whichever site Google found them (LinkedIn, StepStone, the employer...)
+  const site = j.source === "JSearch" ? j.via || "Google Jobs" : j.source;
+  view.firstChild.textContent = (j.source === "Company Site" ? t("view.company") : t("view.source", { s: site })) + " ";
   if (j.source === "Adzuna") c.querySelector(".card-foot").insertBefore(adzunaLabel(), view);
+
+  // personal tracking, kept on this device only
+  const ap = c.querySelector(".act.applied");
+  const setApplied = () => {
+    const on = applied.has(j.id);
+    ap.setAttribute("aria-pressed", String(on)); ap.querySelector("span").textContent = on ? t("act.applied") : t("act.markApplied");
+    c.classList.toggle("is-applied", on);
+  };
+  setApplied();
+  ap.addEventListener("click", () => {
+    toggle(applied, j.id); store.set("hsj-applied", [...applied]); setApplied(); renderFilters();
+    if (state.appliedOnly) update(true);
+  });
+
+  const sh = c.querySelector(".act.share");
+  sh.querySelector("span").textContent = t("act.share");
+  sh.addEventListener("click", () => shareJob(j));
+
+  if (FEEDBACK_URL) {
+    const rp = c.querySelector(".act.report");
+    rp.hidden = false; rp.querySelector("span").textContent = t("act.report"); rp.title = t("act.reportTitle");
+    rp.addEventListener("click", () => openFeedback("job", j));
+  }
+
+  const hd = c.querySelector(".act.hide");
+  const isHidden = hidden.has(j.id);
+  hd.querySelector("span").textContent = isHidden ? t("act.unhide") : t("act.hide");
+  hd.title = isHidden ? "" : t("act.hideTitle");
+  c.classList.toggle("is-hidden", isHidden);
+  hd.addEventListener("click", () => {
+    const setHidden = (on) => { on ? hidden.add(j.id) : hidden.delete(j.id); store.set("hsj-hidden", [...hidden]); update(true); };
+    if (hidden.has(j.id)) { setHidden(false); return; }
+    setHidden(true);
+    toast(t("toast.hidden"), t("toast.undo"), () => setHidden(false));
+  });
   return c;
+}
+
+// phones get the system share sheet, desktops a copied link
+async function shareJob(j) {
+  if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+    try { await navigator.share({ title: j.company ? `${j.title} – ${j.company}` : j.title, url: j.url }); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(j.url); toast(t("act.copied")); } catch (e) { window.prompt(t("act.share"), j.url); }
+}
+
+// ---------------------------------------------------------------- feedback form
+const fb = { kind: "question", job: null, openedAt: 0 };
+function renderKinds() {
+  $("#fbKinds").replaceChildren(...FB_KINDS.map((k) =>
+    chip(t(`kind.${k}`), fb.kind === k, () => { fb.kind = k; renderKinds(); })));
+}
+function openFeedback(kind = "question", job = null) {
+  Object.assign(fb, { kind, job, openedAt: Date.now() });
+  renderKinds();
+  const about = $("#fbAbout");
+  about.hidden = !job;
+  if (job) about.textContent = t("fb.aboutJob", { t: job.company ? `${job.title} – ${job.company}` : job.title });
+  $("#fbStatus").textContent = ""; $("#fbStatus").className = "fb-status";
+  $("#fbForm").hidden = false; $("#fbSend").disabled = false;
+  countChars();
+  $("#feedback").showModal();
+  $("#fbMessage").focus();
+}
+function countChars() { $("#fbCount").textContent = t("fb.count", { n: num($("#fbMessage").value.length) }); }
+function fbStatus(key, ok) {
+  $("#fbStatus").textContent = t(key);
+  $("#fbStatus").className = "fb-status " + (ok ? "ok" : "bad");
+}
+async function sendFeedback(e) {
+  e.preventDefault();
+  const message = $("#fbMessage").value.trim(), email = $("#fbEmail").value.trim();
+  if (message.length < 5) return fbStatus("fb.short");
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fbStatus("fb.badEmail");
+  $("#fbSend").disabled = true;
+  $("#fbStatus").textContent = t("fb.sending"); $("#fbStatus").className = "fb-status";
+  const body = { kind: fb.kind, message, email, lang: I18N.lang, website: $("#fbWebsite").value,
+    elapsed_ms: Date.now() - fb.openedAt, page: location.pathname + location.search,
+    job_id: fb.job ? fb.job.id : "", job_title: fb.job ? `${fb.job.title} – ${fb.job.company || ""}` : "" };
+  try {
+    const res = await fetch(FEEDBACK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (res.status === 429) { fbStatus("fb.tooMany"); return; }
+    if (!res.ok) throw new Error(res.status);
+    $("#fbMessage").value = ""; $("#fbEmail").value = ""; countChars();
+    fbStatus(email ? "fb.thanksReply" : "fb.thanks", true);
+    track("feedback-sent", true);
+  } catch (err) {
+    fbStatus("fb.error");
+    $("#fbSend").disabled = false;
+  }
+}
+function wireFeedback() {
+  if (!FEEDBACK_URL) return;
+  $("#feedbackBtn").hidden = false;
+  $("#footerFeedback").hidden = false;
+  $("#feedbackBtn").addEventListener("click", () => openFeedback("question"));
+  document.querySelectorAll("[data-feedback]").forEach((b) => b.addEventListener("click", () => openFeedback(b.dataset.feedback)));
+  $("#fbMessage").addEventListener("input", () => {
+    countChars();
+    if ($("#fbStatus").classList.contains("bad")) { $("#fbStatus").textContent = ""; $("#fbStatus").className = "fb-status"; }
+  });
+  $("#fbForm").addEventListener("submit", sendFeedback);
+}
+
+let toastTimer;
+function toast(msg, action, onAction) {
+  const box = $("#toast");
+  box.replaceChildren(el("span", {}, msg),
+    action ? el("button", { type: "button", onclick: () => { box.hidden = true; onAction(); } }, action) : null);
+  box.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { box.hidden = true; }, 6000);
 }
 
 // Adzuna's terms: each Adzuna ad carries "Jobs by <Adzuna logo>", both linking to the local Adzuna site
@@ -266,8 +444,11 @@ function writeURL() {
   if (state.levels.size) p.set("type", [...state.levels].join(","));
   if (state.speak.size) p.set("speak", [...state.speak].join(","));
   if (state.fields.size) p.set("field", [...state.fields].join(","));
+  if (state.areas.size) p.set("area", [...state.areas].join(","));
   if (state.modes.size) p.set("mode", [...state.modes].join(","));
-  if (state.posted) p.set("days", state.posted);
+  if (state.company) p.set("company", state.company);
+  if (state.posted && state.posted !== "visit") p.set("days", state.posted);  // "since last visit" is personal
+  if (state.payOnly) p.set("pay", "1");
   if (state.hideMandatory) p.set("nomandatory", "1");
   if (state.sort !== "new") p.set("sort", state.sort);
   const qs = p.toString();
@@ -281,22 +462,27 @@ function readURL() {
   state.levels = new Set(list("type").filter((l) => LEVELS.includes(l)));
   state.speak = new Set(list("speak").filter((s) => SPEAK.includes(s)));
   state.fields = new Set(list("field"));
+  state.areas = new Set(list("area").filter((a) => AREAS.includes(a)));
   state.modes = new Set(list("mode").filter((m) => MODES.includes(m)));
+  state.company = p.get("company") || "";
   state.posted = ["1", "7", "30"].includes(p.get("days")) ? p.get("days") : "";
+  state.payOnly = p.get("pay") === "1";
   state.hideMandatory = p.get("nomandatory") === "1";
   state.sort = ["new", "match", "company"].includes(p.get("sort")) ? p.get("sort") : "new";
 }
 
 // ---------------------------------------------------------------- wiring
+// checkbox id -> state key
+const CHECKS = [["englishOnly", "english"], ["payOnly", "payOnly"], ["hideMandatory", "hideMandatory"],
+  ["savedOnly", "savedOnly"], ["appliedOnly", "appliedOnly"], ["showHidden", "showHidden"]];
+function syncChecks() { for (const [id, key] of CHECKS) $(`#${id}`).checked = state[key]; }
+
 function wire() {
   let t;
   $("#q").value = state.q;
   $("#q").addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(() => { state.q = norm(e.target.value.trim()); update(); }, 150); });
-  $("#englishOnly").checked = state.english;
-  $("#englishOnly").addEventListener("change", (e) => { state.english = e.target.checked; update(); });
-  $("#hideMandatory").checked = state.hideMandatory;
-  $("#hideMandatory").addEventListener("change", (e) => { state.hideMandatory = e.target.checked; update(); });
-  $("#savedOnly").addEventListener("change", (e) => { state.savedOnly = e.target.checked; update(); });
+  syncChecks();
+  for (const [id, key] of CHECKS) $(`#${id}`).addEventListener("change", (e) => { state[key] = e.target.checked; update(); });
   $("#sort").value = state.sort;
   $("#sort").addEventListener("change", (e) => { state.sort = e.target.value; update(); });
   $("#moreBtn").addEventListener("click", () => { shown += PAGE; update(true); });
@@ -313,12 +499,7 @@ function wire() {
   $("#skillAdd").addEventListener("click", addSkill);
   $("#skillInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } });
 
-  const reset = () => {
-    Object.assign(state, { q: "", english: false, levels: new Set(), speak: new Set(), fields: new Set(), modes: new Set(),
-      posted: "", hideMandatory: false, savedOnly: false });
-    $("#q").value = ""; $("#englishOnly").checked = false; $("#hideMandatory").checked = false; $("#savedOnly").checked = false;
-    update();
-  };
+  const reset = () => { Object.assign(state, cleanFilters()); $("#q").value = ""; syncChecks(); update(); };
   $("#resetBtn").addEventListener("click", reset);
   $("#emptyReset").addEventListener("click", reset);
 
@@ -337,6 +518,7 @@ function wire() {
   $("#langBtn").addEventListener("click", () => {
     I18N.set(I18N.lang === "de" ? "en" : "de");
     if (lastData) renderStats(lastData);
+    if (FEEDBACK_URL) { renderKinds(); countChars(); }
     if (JOBS.length) update(true);
   });
   $("#themeBtn").addEventListener("click", () => {
@@ -352,6 +534,7 @@ function renderStats(data) {
   lastData = data;
   const english = JOBS.filter((j) => germanNeed(j) === 0).length;  // same count as the "Only English" filter
   const newToday = JOBS.filter((j) => daysAgo(j.first_seen) === 0).length;
+  const nVisit = JOBS.filter((j) => newSinceVisit(j) && !hidden.has(j.id)).length;
   const updated = new Date(data.updated);
   const when = daysAgo(data.updated.slice(0, 10)) === 0
     ? t("hero.updatedToday", { time: updated.toLocaleTimeString(I18N.locale(), { hour: "2-digit", minute: "2-digit" }) })
@@ -362,6 +545,7 @@ function renderStats(data) {
     el("span", { class: "chip-live" }, el("b", {}, num(JOBS.length)), t("stats.open")),
     el("span", { class: "chip-live" }, el("b", {}, num(english)), t("stats.english")),
     newToday && newToday < JOBS.length ? el("span", { class: "chip-live" }, el("b", {}, num(newToday)), t("stats.new")) : null,
+    nVisit ? el("span", { class: "chip-live" }, el("b", {}, num(nVisit)), t("stats.visit")) : null,
   ].filter(Boolean));
   renderQuick();
   renderRail();
@@ -370,11 +554,10 @@ function renderStats(data) {
 // ---------------------------------------------------------------- intro shortcuts
 // each one starts from a clean board with a single filter, then scrolls down to the results
 function jumpTo(apply) {
-  Object.assign(state, { q: "", english: false, levels: new Set(), speak: new Set(), fields: new Set(), modes: new Set(),
-    posted: "", hideMandatory: false, savedOnly: false });
-  $("#q").value = ""; $("#englishOnly").checked = false; $("#hideMandatory").checked = false; $("#savedOnly").checked = false;
+  Object.assign(state, cleanFilters());
+  $("#q").value = "";
   apply();
-  $("#englishOnly").checked = state.english;
+  syncChecks();
   update();
   $("#stage").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 }
@@ -428,7 +611,7 @@ function renderRail() {
         fact(num(week), t("rail.newWeek")), fact(`${pct} %`, t("rail.onlyEnglish")),
         fact(num(flexible), t("rail.flexible")), fact(num(count((j) => j.company).length), t("rail.employers"))),
       el("p", {}, el("b", {}, t("rail.topCompanies"))),
-      topList(companies, (c) => { state.q = norm(c); $("#q").value = c; }, (c) => c),
+      topList(companies, (c) => { state.company = c; }, (c) => c),
       el("p", { style: "margin-top:12px" }, el("b", {}, t("rail.topFields"))),
       topList(fields, (f) => state.fields.add(f), fieldName)),
     infoCard("types", t("rail.typesTitle"), el("dl", { class: "types" }, ...html("rail.types")),
@@ -442,6 +625,7 @@ async function main() {
   I18N.init();
   readURL();
   wire();
+  wireFeedback();
   $("#resultCount").textContent = t("loading");
   try {
     const res = await fetch("data/jobs.json", { cache: "no-cache" });

@@ -31,11 +31,9 @@
         <span class="brand-name">Hamburg Student Jobs</span>
       </a>
       <nav class="top-actions">
+        <button class="ghost" id="feedbackBtn" type="button" hidden data-i18n-attr="aria-label:nav.feedback;title:nav.feedbackTitle"><span class="long" data-i18n="nav.feedback">Feedback</span><svg class="short" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
         <button class="ghost" id="aboutBtn" type="button" data-i18n-attr="aria-label:nav.how;title:nav.how"><span class="long" data-i18n="nav.how">How it works</span><svg class="short" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
         <button class="ghost lang-btn" id="langBtn" type="button" data-i18n-attr="aria-label:nav.langLabel;title:nav.langLabel"><span class="long" data-i18n="nav.lang">Deutsch</span><span class="short" data-i18n="nav.langShort">DE</span></button>
-        <a class="ghost icon-only" href="https://github.com/vulevu228/HamburgStudentJobs" aria-label="Source code on GitHub" title="Source code on GitHub" data-i18n-attr="aria-label:nav.github;title:nav.github">
-          <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        </a>
         <button class="ghost icon-only" id="themeBtn" type="button" aria-label="Switch colour theme" title="Switch colour theme" data-i18n-attr="aria-label:nav.theme;title:nav.theme">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
         </button>
@@ -125,6 +123,7 @@
 
       <fieldset><legend data-i18n="f.type">Job type</legend><div class="chips" id="f-level"></div></fieldset>
       <fieldset><legend data-i18n="f.speak">Language</legend><div class="options" id="f-speak"></div></fieldset>
+      <fieldset><legend data-i18n="f.area">Where</legend><div class="chips" id="f-area"></div></fieldset>
       <fieldset><legend data-i18n="f.field">Field</legend><div class="options scroll" id="f-field"></div></fieldset>
       <fieldset><legend data-i18n="f.mode">Work mode</legend><div class="chips" id="f-mode"></div></fieldset>
       <fieldset>
@@ -144,7 +143,10 @@
       <fieldset>
         <legend data-i18n="f.more">More</legend>
         <label class="check"><input type="checkbox" id="hideMandatory"> <span data-i18n="f.hideMandatory">Hide "mandatory internship only"</span></label>
+        <label class="check"><input type="checkbox" id="payOnly"> <span data-i18n="f.payOnly">Only jobs that state the pay</span> <span class="count" id="payCount"></span></label>
         <label class="check"><input type="checkbox" id="savedOnly"> <span data-i18n="f.savedOnly">Saved jobs only</span> <span class="count" id="savedCount"></span></label>
+        <label class="check"><input type="checkbox" id="appliedOnly"> <span data-i18n="f.appliedOnly">Jobs I applied to</span> <span class="count" id="appliedCount"></span></label>
+        <label class="check" id="hiddenRow" hidden><input type="checkbox" id="showHidden"> <span data-i18n="f.showHidden">Show hidden jobs</span> <span class="count" id="hiddenCount"></span></label>
       </fieldset>
     </aside>
 
@@ -186,6 +188,8 @@
     <div class="wrap">
       <p data-i18n-html="footer.sources"></p>
       <p data-i18n-html="footer.note"></p>
+      <p id="footerFeedback" hidden><span data-i18n="footer.feedback">Missing an employer, found a mistake, or have an idea?</span>
+        <button type="button" class="link" data-feedback="employer" data-i18n="footer.feedbackBtn">Tell me</button></p>
     </div>
   </footer>
   </div>
@@ -216,6 +220,35 @@
     <p class="hint" data-i18n-html="about.privacy"></p>
   </dialog>
 
+  <dialog id="feedback" aria-labelledby="fbTitle">
+    <form method="dialog" class="dialog-close"><button class="ghost icon-only" aria-label="Close" data-i18n-attr="aria-label:close">✕</button></form>
+    <h2 id="fbTitle" data-i18n="fb.title">Questions, ideas, criticism</h2>
+    <form id="fbForm" novalidate>
+      <p class="hint" data-i18n="fb.intro">Tell me what's missing, what's wrong or what you think. Your message goes privately to the person who runs this site and is never published.</p>
+      <p class="fb-about" id="fbAbout" hidden></p>
+      <fieldset class="fb-kinds">
+        <legend data-i18n="fb.kind">What is it about?</legend>
+        <div class="chips" id="fbKinds"></div>
+      </fieldset>
+      <label class="fb-field">
+        <span data-i18n="fb.message">Your message</span>
+        <textarea id="fbMessage" rows="6" maxlength="2000" required></textarea>
+        <span class="fb-count" id="fbCount" aria-live="polite"></span>
+      </label>
+      <label class="fb-field">
+        <span data-i18n="fb.email">Email – only if you want an answer (optional)</span>
+        <input id="fbEmail" type="email" maxlength="200" autocomplete="email">
+      </label>
+      <!-- left empty by people; bots fill in every field -->
+      <label class="fb-trap" aria-hidden="true">Website <input id="fbWebsite" tabindex="-1" autocomplete="off"></label>
+      <p class="hint" data-i18n-html="fb.privacy"></p>
+      <p class="fb-status" id="fbStatus" role="status"></p>
+      <div class="fb-actions">
+        <button type="submit" class="primary" id="fbSend" data-i18n="fb.send">Send</button>
+      </div>
+    </form>
+  </dialog>
+
   <template id="cardTpl">
     <li class="card">
       <div class="card-top">
@@ -237,8 +270,24 @@
         <span class="facts"></span>
         <a class="view" target="_blank" rel="noopener">View ad <span aria-hidden="true">↗</span></a>
       </div>
+      <div class="card-acts">
+        <button type="button" class="act applied" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span></span>
+        </button>
+        <button type="button" class="act share">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/></svg><span></span>
+        </button>
+        <button type="button" class="act report" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><span></span>
+        </button>
+        <button type="button" class="act hide">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c5 0 9 5 10 7a17 17 0 0 1-3 3.9M6.6 6.6A17 17 0 0 0 2 12c1 2 5 7 10 7a9.6 9.6 0 0 0 4.4-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg><span></span>
+        </button>
+      </div>
     </li>
   </template>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <!-- anonymous visit counts, no cookies: https://www.goatcounter.com (only the page path and event names are sent) -->
   <script data-goatcounter="https://hamburgstudentjobs.goatcounter.com/count"

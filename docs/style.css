@@ -238,6 +238,8 @@ legend + * { clear: both; }
 .title a:hover { color: var(--accent); text-decoration: underline; }
 .meta { margin: 0; color: var(--ink-2); font-size: 14px; overflow-wrap: anywhere; }
 .meta .company { font-weight: 600; color: var(--ink); }
+button.company { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-align: left; }
+button.company:hover { color: var(--accent); text-decoration: underline; }
 .dot { margin: 0 6px; color: var(--ink-3); }
 .save { flex: none; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line);
   background: var(--surface); cursor: pointer; color: var(--ink-3); }
@@ -249,6 +251,7 @@ legend + * { clear: both; }
 .badge.level { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
 .badge.new { background: var(--match-bg); color: var(--match); font-weight: 700; }
 .badge.warn { background: var(--mid-bg); color: var(--mid); }
+.badge.pay { background: var(--ok-bg); color: var(--ok); font-weight: 600; font-variant-numeric: tabular-nums; }
 .lang-pill { font-size: 12.5px; padding: 3px 9px; border-radius: 6px; font-weight: 600; white-space: nowrap; }
 .lang-pill.l0 { background: var(--ok-bg); color: var(--ok); }
 .lang-pill.l1 { background: var(--mid-bg); color: var(--mid); }
@@ -265,6 +268,22 @@ legend + * { clear: both; }
 .facts { flex: 1; color: var(--ink-3); font-size: 13.5px; }
 .view { font-weight: 600; text-decoration: none; white-space: nowrap; }
 .view:hover { text-decoration: underline; }
+/* personal tracking row */
+.card-acts { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px -6px -6px; }
+.act { display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; border-radius: 8px; padding: 5px 8px;
+  font: inherit; font-size: 13px; color: var(--ink-3); cursor: pointer; }
+.act:hover { background: var(--surface-2); color: var(--ink); }
+.act svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.act.applied[aria-pressed="true"] { color: var(--ok); background: var(--ok-bg); font-weight: 600; }
+.act.hide { margin-left: auto; }
+.act[hidden] { display: none; }
+.card.is-applied { border-left: 3px solid var(--ok); }
+.card.is-hidden { opacity: .6; }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 14px;
+  background: var(--ink); color: var(--surface); padding: 10px 16px; border-radius: 10px; font-size: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / .25);
+  max-width: calc(100vw - 32px); }
+.toast[hidden] { display: none; }
+.toast button { background: none; border: 0; color: inherit; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; }
 .more { display: flex; justify-content: center; margin-top: 18px; }
 .secondary { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 18px; cursor: pointer; font-weight: 600; }
 .secondary:hover { border-color: var(--accent); color: var(--accent); }
@@ -281,6 +300,24 @@ dialog h2 { margin-top: 0; }
 .dialog-close { float: right; margin: -8px -8px 0 0; }
 .steps { padding-left: 20px; color: var(--ink-2); }
 .steps li { margin-bottom: 8px; }
+/* feedback form */
+#fbForm fieldset { border: 0; padding: 0; margin: 0 0 14px; }
+#fbForm legend, .fb-field > span { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+.fb-field { display: block; margin-bottom: 14px; position: relative; }
+.fb-field textarea, .fb-field input { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; background: var(--bg); color: var(--ink); font: inherit; }
+.fb-field textarea { resize: vertical; min-height: 120px; }
+.fb-field textarea:focus, .fb-field input:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+.fb-count { display: block; text-align: right; font-size: 12px; color: var(--ink-3); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.fb-about { background: var(--surface-2); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: var(--ink-2); }
+.fb-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.fb-status { min-height: 1.4em; font-size: 14px; margin: 6px 0; color: var(--ink-2); }
+.fb-status.ok { color: var(--ok); font-weight: 600; }
+.fb-status.bad { color: var(--no); }
+.fb-actions { display: flex; justify-content: flex-end; }
+.primary { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px; padding: 10px 22px; font-weight: 700; cursor: pointer; }
+.primary:disabled { opacity: .6; cursor: default; }
+#feedbackBtn .short { display: none; }
 .legend { list-style: none; padding: 0; display: grid; gap: 8px; color: var(--ink-2); font-size: 14px; }
 .legend .lang-pill { display: inline-block; min-width: 110px; text-align: center; margin-right: 8px; }
 
@@ -304,7 +341,6 @@ dialog h2 { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 @media (max-width: 440px) {
   .brand-name, .ghost { white-space: nowrap; }
-  .top-actions a.icon-only { display: none; } /* GitHub link stays in the footer */
   .brand { gap: 8px; }
 }
 
@@ -363,9 +399,9 @@ dialog h2 { margin-top: 0; }
 .lang-btn .short { display: none; }
 #aboutBtn .short { display: none; }
 @media (max-width: 520px) {
-  .lang-btn .long, #aboutBtn .long { display: none; }
+  .lang-btn .long, #aboutBtn .long, #feedbackBtn .long { display: none; }
   .lang-btn .short { display: inline; }
-  #aboutBtn .short { display: block; }
+  #aboutBtn .short, #feedbackBtn .short { display: block; }
   .back-link { display: none; } /* the logo and the footer link lead home */
   #aboutBtn { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; }
   .card-foot { flex-wrap: wrap; row-gap: 6px; }

@@ -29,12 +29,13 @@
     <!-- ================================================================ English -->
     <article lang="en" data-lang="en">
       <h1>Privacy &amp; cookies</h1>
-      <p class="updated">Last updated: 27 September 2026</p>
+      <p class="updated">Last updated: 28 September 2026</p>
 
       <h2>In short</h2>
       <ul>
         <li>This site sets <strong>no cookies</strong> and has no user accounts.</li>
         <li>What you type or choose here (search, filters, skills, saved jobs) <strong>stays in your browser</strong> and is never sent to us.</li>
+        <li>Only if you send a message through the <a href="#feedback">feedback form</a> do we receive it; it is stored privately in Frankfurt.</li>
         <li>We count visits anonymously to see whether the site is useful, without cookies and without storing IP addresses.</li>
         <li>The site is hosted on GitHub Pages, which, like any web host, receives your IP address when your browser loads the page.</li>
       </ul>
@@ -55,7 +56,7 @@
       <p>To learn whether the site is useful, we use <a href="https://www.goatcounter.com">GoatCounter</a>. It sets no cookies
         and does not store your IP address. For each visit it receives the page path, the referring page, your browser's
         user-agent, screen size and your country derived from the IP address, and uses a short-lived, non-reversible hash to tell
-        separate visits apart. We also count two anonymous events: opening a job ad and saving a job. Search terms, filters
+        separate visits apart. We also count three anonymous events: opening a job ad, saving a job and sending a feedback message (never its content). Search terms, filters
         and skills are never sent. Legal basis: Art. 6(1)(f) GDPR (legitimate interest in understanding the use of the site).
         You can block the counter with any content blocker without losing any function of the site.
         Details: <a href="https://www.goatcounter.com/help/privacy">GoatCounter privacy</a>.</p>
@@ -67,6 +68,9 @@
         <thead><tr><th>Key</th><th>Purpose</th></tr></thead>
         <tbody>
           <tr><td><code>hsj-saved</code></td><td>Jobs you saved</td></tr>
+          <tr><td><code>hsj-applied</code></td><td>Jobs you marked as applied</td></tr>
+          <tr><td><code>hsj-hidden</code></td><td>Jobs you hid</td></tr>
+          <tr><td><code>hsj-visit</code></td><td>The date of your last visit, to mark jobs that are new since then</td></tr>
           <tr><td><code>hsj-skills</code></td><td>Skills you added for matching</td></tr>
           <tr><td><code>hsj-lang</code></td><td>Your language choice</td></tr>
           <tr><td><code>hsj-theme</code></td><td>Light or dark mode, if you switched it</td></tr>
@@ -76,19 +80,33 @@
         request (§ 25(2) no. 2 TDDDG), so no consent banner is needed. You can delete it at any time by clearing this
         site's data in your browser.</p>
 
-      <h2>5. Job ads and external links</h2>
-      <p>Job listings come from the Bundesagentur für Arbeit, Adzuna, Arbeitnow and public company career pages. Only titles,
+      <h2 id="feedback">5. Feedback form</h2>
+      <p>If you use the feedback form (&ldquo;Feedback&rdquo; at the top of the page, or &ldquo;Report&rdquo; on a job), we receive what
+        you enter: the type of message, your text, your email address if you give one, and &ndash; when you report a job &ndash; which
+        job it is, plus the language and address of the page you sent it from. Messages are stored in Microsoft Azure Table Storage in
+        the Germany West Central region (Frankfurt), in an account only the operator of this site can open. They are never published.
+        A copy of each message is emailed to the operator via Azure Communication Services (data location: Europe).
+        Microsoft Ireland Operations Ltd. processes this data on our behalf under Microsoft&rsquo;s Data Protection Addendum.</p>
+      <p>To stop abuse, your IP address is used briefly to limit how many messages can be sent per day: only a salted, non-reversible
+        hash of it is kept, and it is deleted after one day. The IP address itself is not stored. We use your email address only to
+        answer you. Messages are deleted once they have been dealt with, and after 12 months at the latest. Please don&rsquo;t put
+        sensitive personal information in your message. Legal basis: Art. 6(1)(f) GDPR (our legitimate interest in receiving and
+        answering feedback about the site).</p>
+
+      <h2>6. Job ads and external links</h2>
+      <p>Job listings come from the Bundesagentur für Arbeit, Adzuna, Arbeitnow, Google for Jobs (via JSearch) and public company career pages. Only titles,
         companies, locations, extracted facts and links are shown here. When you open an ad you leave this site; the target
         site's own privacy policy then applies. The Adzuna logo is hosted on this site, so showing it sends no data to Adzuna.</p>
 
-      <h2>6. Your rights</h2>
+      <h2>7. Your rights</h2>
       <p>Under the GDPR you have the right to access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction of
         processing (Art. 18), data portability (Art. 20) and to object to processing based on legitimate interest (Art. 21).
-        As we do not store personal data ourselves, most requests will concern GitHub or GoatCounter; we will help you with them.
+        Apart from messages sent through the feedback form, we do not store personal data ourselves, so most requests will concern
+        GitHub or GoatCounter; we will help you with them.
         You also have the right to lodge a complaint with a supervisory authority, for example the
         <a href="https://datenschutz-hamburg.de">Hamburg Commissioner for Data Protection and Freedom of Information</a>.</p>
 
-      <h2>7. Changes</h2>
+      <h2>8. Changes</h2>
       <p>If the site gains new features that process personal data, such as user accounts, this statement will be updated
         before those features go live.</p>
     </article>
@@ -96,12 +114,13 @@
     <!-- ================================================================ Deutsch -->
     <article lang="de" data-lang="de" hidden>
       <h1>Datenschutz &amp; Cookies</h1>
-      <p class="updated">Stand: 27. September 2026</p>
+      <p class="updated">Stand: 28. September 2026</p>
 
       <h2>Kurz gesagt</h2>
       <ul>
         <li>Diese Seite setzt <strong>keine Cookies</strong> und hat keine Nutzerkonten.</li>
         <li>Was du hier eingibst oder auswählst (Suche, Filter, Skills, gemerkte Jobs), <strong>bleibt in deinem Browser</strong> und wird nie an uns gesendet.</li>
+        <li>Nur wenn du uns über das <a href="#feedback-de">Feedback-Formular</a> schreibst, erhalten wir deine Nachricht; sie wird privat in Frankfurt gespeichert.</li>
         <li>Wir zählen Besuche anonym, um zu sehen, ob die Seite nützlich ist – ohne Cookies und ohne IP-Adressen zu speichern.</li>
         <li>Die Seite wird über GitHub Pages bereitgestellt. Wie jeder Webhoster erhält GitHub beim Laden der Seite deine IP-Adresse.</li>
       </ul>
@@ -122,8 +141,8 @@
       <p>Um zu erfahren, ob die Seite nützlich ist, nutzen wir <a href="https://www.goatcounter.com">GoatCounter</a>. GoatCounter
         setzt keine Cookies und speichert keine IP-Adressen. Pro Besuch erhält es den Seitenpfad, die verweisende Seite, den
         User-Agent deines Browsers, die Bildschirmgröße und das aus der IP-Adresse abgeleitete Land und verwendet einen kurzlebigen,
-        nicht umkehrbaren Hash, um einzelne Besuche zu unterscheiden. Zusätzlich zählen wir zwei anonyme Ereignisse: das Öffnen
-        einer Anzeige und das Merken eines Jobs. Suchbegriffe, Filter und Skills werden nie übertragen. Rechtsgrundlage:
+        nicht umkehrbaren Hash, um einzelne Besuche zu unterscheiden. Zusätzlich zählen wir drei anonyme Ereignisse: das Öffnen
+        einer Anzeige, das Merken eines Jobs und das Senden einer Feedback-Nachricht (nie ihren Inhalt). Suchbegriffe, Filter und Skills werden nie übertragen. Rechtsgrundlage:
         Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Auswertung der Nutzung). Du kannst den Zähler mit jedem
         Inhaltsblocker blockieren, ohne eine Funktion der Seite zu verlieren.
         Details: <a href="https://www.goatcounter.com/help/privacy">Datenschutz bei GoatCounter</a>.</p>
@@ -135,6 +154,9 @@
         <thead><tr><th>Schlüssel</th><th>Zweck</th></tr></thead>
         <tbody>
           <tr><td><code>hsj-saved</code></td><td>Deine gemerkten Jobs</td></tr>
+          <tr><td><code>hsj-applied</code></td><td>Jobs, die du als beworben markiert hast</td></tr>
+          <tr><td><code>hsj-hidden</code></td><td>Jobs, die du ausgeblendet hast</td></tr>
+          <tr><td><code>hsj-visit</code></td><td>Das Datum deines letzten Besuchs, um seitdem neue Jobs zu markieren</td></tr>
           <tr><td><code>hsj-skills</code></td><td>Skills, die du für den Abgleich hinzugefügt hast</td></tr>
           <tr><td><code>hsj-lang</code></td><td>Deine Sprachauswahl</td></tr>
           <tr><td><code>hsj-theme</code></td><td>Heller oder dunkler Modus, falls du ihn umgestellt hast</td></tr>
@@ -144,27 +166,41 @@
         Dienst unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG), daher ist kein Einwilligungsbanner nötig. Du kannst sie jederzeit
         löschen, indem du die Websitedaten dieser Seite in deinem Browser entfernst.</p>
 
-      <h2>5. Stellenanzeigen und externe Links</h2>
-      <p>Die Stellenanzeigen stammen von der Bundesagentur für Arbeit, Adzuna, Arbeitnow und öffentlichen Karriereseiten von
-        Unternehmen. Hier werden nur Titel, Firmen, Orte, ausgewertete Angaben und Links angezeigt. Wenn du eine Anzeige öffnest,
+      <h2 id="feedback-de">5. Feedback-Formular</h2>
+      <p>Wenn du das Feedback-Formular nutzt (&bdquo;Feedback&ldquo; oben auf der Seite oder &bdquo;Melden&ldquo; bei einem Job), erhalten
+        wir, was du eingibst: die Art der Nachricht, deinen Text, deine E-Mail-Adresse, falls du eine angibst, und &ndash; wenn du einen
+        Job meldest &ndash; um welchen Job es geht, sowie Sprache und Adresse der Seite, von der du sendest. Die Nachrichten werden in
+        Microsoft Azure Table Storage in der Region Germany West Central (Frankfurt) gespeichert, in einem Konto, auf das nur der
+        Betreiber dieser Seite zugreifen kann. Sie werden nie veröffentlicht. Eine Kopie jeder Nachricht wird per E-Mail über Azure
+        Communication Services (Datenstandort: Europa) an den Betreiber geschickt. Microsoft Ireland Operations Ltd. verarbeitet
+        diese Daten in unserem Auftrag auf Grundlage des Data Protection Addendum von Microsoft.</p>
+      <p>Zum Schutz vor Missbrauch wird deine IP-Adresse kurz genutzt, um die Zahl der Nachrichten pro Tag zu begrenzen: Gespeichert
+        wird nur ein gesalzener, nicht umkehrbarer Hash, der nach einem Tag gelöscht wird. Die IP-Adresse selbst wird nicht gespeichert.
+        Deine E-Mail-Adresse nutzen wir nur, um dir zu antworten. Nachrichten werden gelöscht, sobald sie erledigt sind, spätestens
+        nach 12 Monaten. Bitte schreib keine sensiblen persönlichen Daten in deine Nachricht. Rechtsgrundlage: Art. 6 Abs. 1 lit. f
+        DSGVO (berechtigtes Interesse daran, Rückmeldungen zur Seite zu erhalten und zu beantworten).</p>
+
+      <h2>6. Stellenanzeigen und externe Links</h2>
+      <p>Die Stellenanzeigen stammen von der Bundesagentur für Arbeit, Adzuna, Arbeitnow, Google for Jobs (über JSearch) und
+        öffentlichen Karriereseiten von Unternehmen. Hier werden nur Titel, Firmen, Orte, ausgewertete Angaben und Links angezeigt. Wenn du eine Anzeige öffnest,
         verlässt du diese Seite; dann gilt die Datenschutzerklärung der Zielseite. Das Adzuna-Logo liegt auf dieser Seite, seine
         Anzeige überträgt also keine Daten an Adzuna.</p>
 
-      <h2>6. Deine Rechte</h2>
+      <h2>7. Deine Rechte</h2>
       <p>Nach der DSGVO hast du das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der
         Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen Verarbeitungen auf Grundlage berechtigter
-        Interessen (Art. 21). Da wir selbst keine personenbezogenen Daten speichern, betreffen die meisten Anfragen GitHub oder
-        GoatCounter; wir helfen dir dabei. Außerdem kannst du dich bei einer Aufsichtsbehörde beschweren, zum Beispiel beim
+        Interessen (Art. 21). Abgesehen von Nachrichten über das Feedback-Formular speichern wir selbst keine personenbezogenen Daten, daher betreffen
+        die meisten Anfragen GitHub oder GoatCounter; wir helfen dir dabei. Außerdem kannst du dich bei einer Aufsichtsbehörde beschweren, zum Beispiel beim
         <a href="https://datenschutz-hamburg.de">Hamburgischen Beauftragten für Datenschutz und Informationsfreiheit</a>.</p>
 
-      <h2>7. Änderungen</h2>
+      <h2>8. Änderungen</h2>
       <p>Wenn die Seite neue Funktionen erhält, die personenbezogene Daten verarbeiten, etwa Nutzerkonten, wird diese Erklärung
         vorher aktualisiert.</p>
     </article>
   </main>
 
   <footer class="footer">
-    <div class="wrap"><p><a href="./" data-i18n="privacy.back">← Back to jobs</a> · <a href="https://github.com/vulevu228/HamburgStudentJobs" data-i18n="nav.github">Source code on GitHub</a></p></div>
+    <div class="wrap"><p><a href="./" data-i18n="privacy.back">← Back to jobs</a></p></div>
   </footer>
 
   <script src="i18n.js"></script>

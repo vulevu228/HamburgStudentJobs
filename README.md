@@ -1,7 +1,7 @@
 # Hamburg Student Jobs
 
 **Find the student job in Hamburg that fits you.** Every Werkstudent, internship, thesis, side-job and
-junior role from the Federal Employment Agency, Adzuna, Arbeitnow and company career pages in one place,
+junior role from the Federal Employment Agency, Adzuna, Arbeitnow, Google for Jobs (JSearch) and company career pages in one place,
 updated every morning, and filterable by field, skills, job type and how much German the ad really asks for.
 The site is available in English and German.
 
@@ -25,14 +25,17 @@ Live site: **https://hamburgstudentjobs.de/**
 ```
 GitHub Actions (daily, 04:30 UTC)
   pipeline/build.py
-    ├─ sources.py   Bundesagentur für Arbeit job search API, Arbeitnow API, and the career feeds of
-    │               28 Hamburg employers (Greenhouse, Lever, Ashby, SmartRecruiters, Personio, Workday)
+    ├─ sources.py   Bundesagentur für Arbeit job search API, Arbeitnow, Adzuna, JSearch (Google for Jobs)
+    │               and the career feeds of 34 Hamburg employers (Greenhouse, Lever, Ashby,
+    │               SmartRecruiters, Personio, Workday)
     ├─ extract.py   rules: job type, field, ad language, German requirement, skills, hours, pay…
     ├─ ai.py        Claude Haiku 4.5: English summary, key requirements, German/English level
     │               (structured output, each new ad read once)
     └─ docs/data/jobs.json   published data, also the pipeline's memory between runs
   ▼
 GitHub Pages: docs/index.html + app.js filter jobs.json in the browser (no server, no cookies)
+
+Feedback form ──POST──> Azure Function (feedback/) ──> Azure Table Storage, Frankfurt (private)
 ```
 
 - **Only new ads cost anything, and by default only the ones this board is for.** The AI reads an ad once,
@@ -46,6 +49,9 @@ GitHub Pages: docs/index.html + app.js filter jobs.json in the browser (no serve
   "open at N locations".
 - The site shows the title, company, extracted facts and a link to the original ad; the ad text itself
   is not republished.
+- **Feedback** (questions, ideas, criticism, reports about a job ad) goes to a small Azure Function that
+  stores it privately in Table Storage: origin check, bot trap, 5 messages per visitor per day, no IP addresses
+  stored, messages deleted after 12 months. Setup: [feedback/SETUP.md](feedback/SETUP.md).
 
 ## Run it yourself
 
@@ -63,6 +69,7 @@ The link-preview image `docs/og.png` is rendered from `assets/og.html` (1200×63
 
 - [Bundesagentur für Arbeit, Jobsuche API](https://jobsuche.api.bund.dev/)
 - [Arbeitnow job board API](https://www.arbeitnow.com/blog/job-board-api)
+- [JSearch by OpenWeb Ninja](https://www.openwebninja.com/api/jsearch) (Google for Jobs; free plan, 6 requests a day)
 - Public job feeds of the employers listed in `pipeline/catalog.py`
 
 AI summaries and language levels can be wrong. Always read the original ad before applying.
