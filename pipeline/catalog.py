@@ -10,6 +10,8 @@ BA_TERMS = [
     "Abschlussarbeit", "Bachelorarbeit", "Masterarbeit", "Thesis",
     "Trainee", "Junior", "Berufseinsteiger", "Graduate",
     "Student", "Studentenjob", "Studierende", "Praxissemester", "Volontariat", "Absolvent",
+    # the agency's own "internship / trainee" category, whatever the title says (~200 extra ads, 2026-09-28)
+    {"angebotsart": 34},
 ]
 
 # company career feeds with Hamburg postings: (ats, slug, display name)
@@ -43,6 +45,13 @@ COMPANIES = [
     ("personio", "lemundo", "Lemundo"),
     ("personio", "natsana", "Natsana"),
     ("personio", "hvv", "hvv"),
+    # added 2026-09-28: Workday career sites with Hamburg postings (found via search, probed live)
+    ("workday", "philips|wd3|jobs-and-careers", "Philips"),
+    ("workday", "nxp|wd3|careers", "NXP Semiconductors"),
+    ("workday", "mabanaft|wd3|Mabanaft", "MB Energy"),
+    ("workday", "shell|wd3|ShellCareers", "Shell"),
+    ("workday", "db|wd3|DBWebsite", "Deutsche Bank"),
+    ("workday", "cc|wd3|ChanelCareers", "CHANEL"),
 ]
 
 # Adzuna (free plan: 250 calls/day, 2,500/month) - fewer, broader terms; each call returns up to 50 ads
@@ -50,6 +59,12 @@ ADZUNA_TERMS = ["werkstudent", "working student", "praktikum", "internship", "ab
                 "masterarbeit", "bachelorarbeit", "trainee", "studentenjob", "junior"]
 ADZUNA_DAILY_CALLS = 70     # first run: full crawl within this; later runs only need ~10
 ADZUNA_KEEP_DAYS = 45       # Adzuna ads are not re-checked daily, so they expire by age
+
+# JSearch (free plan: 200 requests/month, hard limit) - one request per query per day, 6 x 31 = 186
+JSEARCH_QUERIES = ["Werkstudent in Hamburg", "Praktikum in Hamburg", "working student in Hamburg",
+                   "internship in Hamburg", "Abschlussarbeit in Hamburg", "Studentenjob in Hamburg"]
+JSEARCH_DAILY_CALLS = 6
+JSEARCH_KEEP_DAYS = 30      # like Adzuna: not re-checked daily, so they expire by age
 
 LEVELS = ["Werkstudent", "Internship", "Thesis", "Student side job", "Junior / Trainee"]
 

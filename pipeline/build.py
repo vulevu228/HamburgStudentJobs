@@ -52,6 +52,15 @@ def collect(known):
                                                      budget, None if first else 3, 7 if first else 2)))
     else:
         print("  Adzuna           skipped (no ADZUNA_APP_ID / ADZUNA_APP_KEY)")
+    if key := os.environ.get("JSEARCH_API_KEY"):
+        # first run looks back a month; afterwards the last 3 days are enough
+        first = not any(r["source"] == "JSearch" for r in known.values())
+        budget = sources.CallBudget(catalog.JSEARCH_DAILY_CALLS)
+        BUDGETS["JSearch"] = budget
+        tasks.append(("JSearch", sources.src_jsearch, (catalog.JSEARCH_QUERIES, catalog.CITY, key, budget,
+                                                       "month" if first else "3days")))
+    else:
+        print("  JSearch          skipped (no JSEARCH_API_KEY)")
     for ats, slug, name in catalog.COMPANIES:
         tasks.append((name, sources.ATS[ats], (slug, name, catalog.CITY) if ats == "workday" else (slug, name)))
     jobs, ok, failed = [], set(), []
@@ -107,6 +116,7 @@ def describe(job, level, today):
         "work_mode": job.work_mode or d["work_mode"],
         "hours": d["hours"], "start": d["start"] or feed.get("start", ""), "duration": d["duration"] or feed.get("duration", ""),
         "pay": job.salary or d["pay"], "mandatory": d["mandatory"], "skills": extract.skills_in(text),
+        **({"via": job.extra["via"]} if job.extra.get("via") else {}),  # site the link opens (JSearch: LinkedIn, StepStone...)
     }
 
 
@@ -144,8 +154,8 @@ def main():
     # keep student-level postings in the area; one record per company+title
     seen_keys, title_owner, fresh, still = {}, {}, [], []
     # on duplicates keep the company's own ad (direct link), then Arbeitnow, then the job agency
-    # (Adzuna last: it only returns a snippet of the ad)
-    raw.sort(key=lambda j: {"Company Site": 0, "Arbeitnow": 1, "Arbeitsagentur": 2}.get(j.source, 3))
+    # (JSearch next: a board's copy of the ad; Adzuna last: it only returns a snippet of the ad)
+    raw.sort(key=lambda j: {"Company Site": 0, "Arbeitnow": 1, "Arbeitsagentur": 2, "JSearch": 3}.get(j.source, 4))
     for job in raw:
         level = extract.level_of(job.title, job.level_hint)
         if not level or not in_area(job):
@@ -228,6 +238,8 @@ def main():
             return False
         if r["source"] == "Adzuna":  # fetched incrementally, not re-seen daily: expire by age instead
             return (date.fromisoformat(today) - date.fromisoformat(r["posted"])).days <= catalog.ADZUNA_KEEP_DAYS
+        if r["source"] == "JSearch":
+            return (date.fromisoformat(today) - date.fromisoformat(r["posted"])).days <= catalog.JSEARCH_KEEP_DAYS
         source_ok = r["source"] in ok_sources if r["source"] in ("Arbeitsagentur", "Arbeitnow") else r["company"] in ok_sources
         gone_days = (date.fromisoformat(today) - date.fromisoformat(r["last_seen"])).days
         return gone_days < GRACE_DAYS or not source_ok
@@ -237,8 +249,9 @@ def main():
     for r in jobs:  # older Adzuna records can't be re-read (fetched incrementally): judge by the ad's language
         if r["source"] == "Adzuna" and "english" not in r:
             r["english"] = "required" if r["lang"] == "EN" else "not mentioned"
-    fuller = {norm(r["title"]) for r in jobs if r["source"] != "Adzuna" and len(norm(r["title"])) >= 28}
-    jobs = [r for r in jobs if not (r["source"] == "Adzuna" and norm(r["title"]) in fuller)]
+    # same for JSearch copies of ads we have from the employer, the job agency or Arbeitnow
+    fuller = {norm(r["title"]) for r in jobs if r["source"] not in ("Adzuna", "JSearch") and len(norm(r["title"])) >= 28}
+    jobs = [r for r in jobs if not (r["source"] in ("Adzuna", "JSearch") and norm(r["title"]) in fuller)]
 
     if not raw:
         sys.exit("every source failed - keeping the previous jobs.json")

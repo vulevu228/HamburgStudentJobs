@@ -4,14 +4,14 @@ import re
 import catalog
 
 I = re.IGNORECASE
-NOT_STUDENT = r"ausbildung|azubi|auszubildend|apprentice|schüler|schulpraktikum|fsj|bufdi|freiwilliges soziales|duales studium|dual student"
+NOT_STUDENT = r"ausbildung|azubi|auszubildend|apprentice|schüler|schulpraktikum|fsj|bufdi|freiwilliges soziales|freiwilligendienst|abiturient|duales studium|dual student"
 
 
 def level_of(title, hint=""):
     t = f"{title} {hint}"
     if re.search(NOT_STUDENT, title, I):
         return None
-    if re.search(r"werkstud|working student|student assistant|studentische|working_student|hiwi", t, I):
+    if re.search(r"werkstud|werksstud|working student|student assistant|studentische|working_student|hiwi", t, I):
         return "Werkstudent"
     if re.search(r"thesis|abschlussarbeit|bachelorarbeit|masterarbeit", t, I):
         return "Thesis"
@@ -25,6 +25,8 @@ def level_of(title, hint=""):
     if re.search(r"studentenjob|studentjob|student job|jobs? für studierende|für studierende|\bstudent(\*in|in)?\b|aushilfe.{0,20}student|minijob.{0,20}student",
                  title, I):
         return "Student side job"
+    if re.search(r"referendar", title, I):
+        return "Junior / Trainee"  # post-degree legal/teaching training; the job agency files it as PRAKTIKUM_TRAINEE
     if re.search(internship + "|PRAKTIKUM_TRAINEE", hint, I):
         return "Internship"
     if re.search(r"junior|entry[- ]level|graduate|trainee|berufseinsteiger|absolvent|young professional|volont", t, I):

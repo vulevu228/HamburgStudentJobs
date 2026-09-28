@@ -65,11 +65,13 @@ def strip_html(s):
 
 # ---------------------------------------------------------------- sources
 def src_arbeitsagentur(terms, city, radius_km, max_pages=10):
+    """terms: search words, or dicts of extra query parameters (e.g. a job category without a keyword)."""
     jobs = {}
     for term in terms:
+        query = term if isinstance(term, dict) else {"was": term}
         for page in range(1, max_pages + 1):
             r = get(f"{BA_URL}/v6/jobs", headers=BA_KEY, params={
-                "was": term, "wo": city, "umkreis": radius_km, "size": 100, "page": page})
+                **query, "wo": city, "umkreis": radius_km, "size": 100, "page": page})
             batch = r.json().get("ergebnisliste", [])
             for j in batch:
                 ref = j["referenznummer"]
@@ -88,9 +90,12 @@ def src_arbeitsagentur(terms, city, radius_km, max_pages=10):
                     d = get(f"{BA_URL}/v4/jobdetails/{b}", headers=BA_KEY).json()
                     return d.get("stellenangebotsBeschreibung", "")
 
+                # the agency's type is only a usable hint next to a matching keyword; a category-only hit
+                # (volunteer service, social workers, shop staff filed as "internship") must say it in the title
+                hint = j.get("stellenangebotsart", "") if "was" in query else ""
                 jobs[ref] = Job(f"ba:{ref}", j.get("firma", ""), j["stellenangebotsTitel"], ort,
                                 f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{ref}", "Arbeitsagentur",
-                                salary=sal, level_hint=j.get("stellenangebotsart", ""), fetch=fetch,
+                                salary=sal, level_hint=hint, fetch=fetch,
                                 posted=j.get("datumErsteVeroeffentlichung", "")[:10])
                 feed = jobs[ref].extra.setdefault("feed", {})  # structured facts the ad text often omits
                 if (j.get("eintrittszeitraum") or {}).get("von"):
@@ -190,8 +195,11 @@ def src_workday(spec, name, city):
                 info = get(f"{base}/wday/cxs/{tenant}/{site}{path}").json().get("jobPostingInfo", {})
                 return strip_html(info.get("jobDescription", "")) + "\nLocation: " + info.get("location", "")
 
-            # searchText=<city> already scopes it; locationsText can be "3 Locations"
+            # searchText=<city> also matches ad text, so keep only ads placed in the city or at several
+            # locations ("3 Locations", which usually includes it)
             loc = j.get("locationsText", "")
+            if city.lower() not in loc.lower() and not re.search(r"\d+ locations", loc, I):
+                continue
             out.append(Job(f"wd:{tenant}:{path.rsplit('_', 1)[-1]}", name, j["title"],
                            loc if city.lower() in loc.lower() else f"{city} ({loc})",
                            f"{base}/{site}{path}", "Company Site", fetch=fetch,
@@ -276,6 +284,51 @@ def src_adzuna(terms, city, radius_km, app_id, app_key, budget, max_days_old=Non
             if len(results) < 50:
                 break
             page += 1
+    return out
+
+
+def src_jsearch(queries, city, api_key, budget, date_posted="3days"):
+    """JSearch (OpenWeb Ninja): Google for Jobs results, i.e. ads from LinkedIn, StepStone, Indeed and
+    company sites. Free plan: 200 requests/month, hard limit - one request per query (10 ads), never paged."""
+    out, seen = [], set()
+    for q in queries:
+        if not budget.take():
+            break
+        r = requests.get("https://api.openwebninja.com/jsearch/search", headers={**UA, "x-api-key": api_key}, timeout=40,
+                         params={"query": q, "country": "de", "date_posted": date_posted, "num_pages": 1})
+        if r.status_code in (401, 403):
+            raise RuntimeError(f"JSearch rejected the key (HTTP {r.status_code})")
+        if r.status_code == 429:
+            raise RuntimeError("JSearch quota used up for this month (HTTP 429)")
+        r.raise_for_status()
+        data = r.json().get("data") or []
+        for j in data.get("jobs", []) if isinstance(data, dict) else data:
+            if not j.get("job_id") or j["job_id"] in seen:
+                continue
+            seen.add(j["job_id"])
+            place = j.get("job_location") or j.get("job_city") or ""
+            remote = bool(j.get("job_is_remote"))
+            if city.lower() not in f"{place} {j.get('job_city') or ''}".lower():
+                if not (remote and (j.get("job_country") or "").upper() == "DE"):
+                    continue
+                place = f"Remote, Germany ({place or 'Germany'})"
+            # prefer the employer's own apply link over a job board's
+            direct = next((o for o in j.get("apply_options") or [] if o.get("is_direct")), None)
+            url = (direct or {}).get("apply_link") or j.get("job_apply_link") or j.get("job_google_link")
+            via = (direct or {}).get("publisher") or j.get("job_publisher") or ""
+            sal = ""
+            if j.get("job_min_salary") and (j.get("job_salary_currency") or "EUR") == "EUR":
+                lo, hi = j["job_min_salary"], j.get("job_max_salary") or j["job_min_salary"]
+                period = (j.get("job_salary_period") or "").upper()
+                sal = f"{lo:g}-{hi:g} EUR/h" if period == "HOUR" else f"{lo:,.0f}-{hi:,.0f} EUR/yr" if period == "YEAR" else ""
+            job = Job(f"jsearch:{j['job_id']}", j.get("employer_name") or "", j.get("job_title") or "", place, url, "JSearch",
+                      work_mode="Remote" if remote else "", salary=sal,
+                      level_hint=" ".join(j.get("job_employment_types") or []).replace("INTERN", "internship"),
+                      description=strip_html(j.get("job_description") or ""),
+                      posted=(j.get("job_posted_at_datetime_utc") or "")[:10])
+            job.extra["via"] = via
+            out.append(job)
+        time.sleep(1)
     return out
 
 
