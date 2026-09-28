@@ -317,7 +317,8 @@ def src_jsearch(queries, city, api_key, budget, date_posted="3days"):
             if not j.get("job_id") or j["job_id"] in seen:
                 continue
             seen.add(j["job_id"])
-            place = j.get("job_location") or j.get("job_city") or ""
+            # Google appends extras: "Hamburg     •  über Indeed" -> "Hamburg"
+            place = re.split(r"\s*[•·]\s*", j.get("job_location") or j.get("job_city") or "")[0].strip()
             remote = bool(j.get("job_is_remote"))
             if city.lower() not in f"{place} {j.get('job_city') or ''}".lower():
                 if not (remote and (j.get("job_country") or "").upper() == "DE"):

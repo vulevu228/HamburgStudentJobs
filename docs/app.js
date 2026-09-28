@@ -85,7 +85,7 @@ function areaOf(j) {
 }
 // sources write places differently: "Hamburg, , Germany", "Ahrensburg, Stormarn (Kreis)", "Hamburg / Hamburg"
 function placeOf(j) {
-  return (j.location || "Hamburg").replace(/(,\s*)+(Deutschland|Germany)$/i, "").replace(/,\s*HH$/, "")
+  return (j.location || "Hamburg").replace(/\s*[•·].*$/, "").replace(/(,\s*)+(Deutschland|Germany)$/i, "").replace(/,\s*HH$/, "")
     .replace(/,\s*(Kreis [^,]+|[^,]+ \(Kreis\))$/, "").replace(/^Hamburg \/ Hamburg$/, "Hamburg")
     .replace(/^Remote, Germany \((.+)\)$/, "Remote ($1)");
 }
