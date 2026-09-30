@@ -315,6 +315,14 @@ dialog h2 { margin-top: 0; }
 .fb-status.ok { color: var(--ok); font-weight: 600; }
 .fb-status.bad { color: var(--no); }
 .fb-actions { display: flex; justify-content: flex-end; }
+/* daily job alert */
+.alert-bar { margin: 0 0 12px; }
+.alert-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px dashed var(--accent); background: var(--accent-soft);
+  color: var(--ink); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.alert-btn svg { color: var(--accent); flex: none; }
+.alert-btn:hover { border-style: solid; }
+.alert-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+#alertAction p:first-child { margin-top: 0; }
 .primary { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px; padding: 10px 22px; font-weight: 700; cursor: pointer; }
 .primary:disabled { opacity: .6; cursor: default; }
 #feedbackBtn .short { display: none; }

@@ -164,6 +164,12 @@
         </label>
       </div>
       <div class="active-filters" id="activeFilters"></div>
+      <div class="alert-bar" id="alertBar" hidden>
+        <button type="button" class="alert-btn" id="alertBtn">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9zM10 19a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span data-i18n="alert.button">Email me new jobs like these</span>
+        </button>
+      </div>
       <ol class="cards" id="cards"></ol>
       <div class="more"><button id="moreBtn" type="button" class="secondary" hidden>Show more</button></div>
       <div class="empty" id="empty" hidden>
@@ -247,6 +253,32 @@
         <button type="submit" class="primary" id="fbSend" data-i18n="fb.send">Send</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="alertDlg" aria-labelledby="alertTitle">
+    <form method="dialog" class="dialog-close"><button class="ghost icon-only" aria-label="Close" data-i18n-attr="aria-label:close">✕</button></form>
+    <h2 id="alertTitle" data-i18n="alert.title">New jobs by email</h2>
+    <form id="alertForm" novalidate>
+      <p class="hint" data-i18n="alert.intro">Every morning, one email with the jobs that are new on the site and match your filters. No email on days without a match.</p>
+      <p class="fb-about"><b data-i18n="alert.filters">Your filters:</b> <span id="alertSummary"></span></p>
+      <label class="fb-field">
+        <span data-i18n="alert.email">Your email address</span>
+        <input id="alertEmail" type="email" maxlength="200" autocomplete="email" required>
+      </label>
+      <label class="fb-trap" aria-hidden="true">Website <input id="alertWebsite" tabindex="-1" autocomplete="off"></label>
+      <p class="hint" data-i18n-html="alert.privacy"></p>
+      <p class="fb-status" id="alertStatus" role="status"></p>
+      <div class="fb-actions">
+        <button type="submit" class="primary" id="alertSend" data-i18n="alert.send">Send confirmation email</button>
+      </div>
+    </form>
+    <div id="alertAction" hidden>
+      <p id="alertActionText"></p>
+      <p class="fb-status" id="alertActionStatus" role="status"></p>
+      <div class="fb-actions">
+        <button type="button" class="primary" id="alertActionBtn"></button>
+      </div>
+    </div>
   </dialog>
 
   <template id="cardTpl">

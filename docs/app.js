@@ -402,6 +402,118 @@ function wireFeedback() {
   $("#fbForm").addEventListener("submit", sendFeedback);
 }
 
+// ---------------------------------------------------------------- daily job alert by email
+// Same Azure Function as the feedback (feedback/Alerts): sign-up -> confirmation email (double opt-in) ->
+// one email each morning with the day's new jobs that match the filters saved at sign-up.
+const ALERTS_URL = FEEDBACK_URL ? FEEDBACK_URL.replace(/\/feedback$/, "/alerts") : "";
+// links in the alert emails: ?alert=confirm|unsubscribe&id=..&t=.. (read once, before the URL is rewritten)
+const ALERT_LINK = (() => {
+  const p = new URLSearchParams(location.search);
+  const action = p.get("alert");
+  return ["confirm", "unsubscribe"].includes(action) && p.get("id") && p.get("t") ? { action, id: p.get("id"), t: p.get("t") } : null;
+})();
+const alertUI = { openedAt: 0 };
+// the board's filters that an alert can keep (not sorting, "posted", or personal lists like saved/hidden)
+function alertQuery() {
+  const p = new URLSearchParams();
+  if (state.q) p.set("q", state.q);
+  if (state.english) p.set("en", "1");
+  if (state.levels.size) p.set("type", [...state.levels].join(","));
+  if (state.speak.size) p.set("speak", [...state.speak].join(","));
+  if (state.fields.size) p.set("field", [...state.fields].join(","));
+  if (state.areas.size) p.set("area", [...state.areas].join(","));
+  if (state.modes.size) p.set("mode", [...state.modes].join(","));
+  if (state.company) p.set("company", state.company);
+  if (state.payOnly) p.set("pay", "1");
+  if (state.hideMandatory) p.set("nomandatory", "1");
+  return p.toString();
+}
+function alertSummary() {
+  const parts = [];
+  if (state.q) parts.push(t("chip.search", { q: state.q }));
+  if (state.english) parts.push(t("english.switch"));
+  state.levels.forEach((l) => parts.push(levelName(l)));
+  state.speak.forEach((g) => parts.push(t(`speak.${g}`)));
+  state.areas.forEach((a) => parts.push(t(`area.${a}`)));
+  state.fields.forEach((f) => parts.push(fieldName(f)));
+  state.modes.forEach((m) => parts.push(modeName(m)));
+  if (state.company) parts.push(t("chip.company", { c: state.company }));
+  if (state.payOnly) parts.push(t("chip.pay"));
+  if (state.hideMandatory) parts.push(t("chip.noMandatory"));
+  return parts.join(" · ") || t("alert.all");
+}
+function alertStatus(id, key, ok, vars) {
+  $(id).textContent = key ? t(key, vars) : "";
+  $(id).className = "fb-status" + (ok === true ? " ok" : ok === false ? " bad" : "");
+}
+function openAlert() {
+  alertUI.openedAt = Date.now();
+  $("#alertTitle").textContent = t("alert.title");
+  $("#alertForm").hidden = false; $("#alertAction").hidden = true;
+  $("#alertSummary").textContent = alertSummary();
+  $("#alertSend").disabled = false;
+  alertStatus("#alertStatus", "");
+  $("#alertDlg").showModal();
+  $("#alertEmail").focus();
+}
+async function sendAlert(e) {
+  e.preventDefault();
+  const email = $("#alertEmail").value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return alertStatus("#alertStatus", "alert.badEmail", false);
+  $("#alertSend").disabled = true;
+  alertStatus("#alertStatus", "alert.sending");
+  const body = { email, filters: alertQuery(), lang: I18N.lang, website: $("#alertWebsite").value, elapsed_ms: Date.now() - alertUI.openedAt };
+  try {
+    const res = await fetch(`${ALERTS_URL}/subscribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (res.status === 429) { alertStatus("#alertStatus", "alert.tooMany", false); return; }
+    if (!res.ok) throw new Error(res.status);
+    alertStatus("#alertStatus", "alert.sent", true, { e: email });
+    track("alert-signup", true);
+  } catch (err) {
+    alertStatus("#alertStatus", "alert.error", false);
+    $("#alertSend").disabled = false;
+  }
+}
+// the page opened from a link in an alert email: ask before acting, so mail scanners that open links can't confirm or unsubscribe
+function openAlertLink(link) {
+  const confirm = link.action === "confirm";
+  $("#alertTitle").textContent = t(confirm ? "alert.confirmTitle" : "alert.unsubTitle");
+  $("#alertForm").hidden = true; $("#alertAction").hidden = false;
+  $("#alertActionText").textContent = t(confirm ? "alert.confirmText" : "alert.unsubText");
+  $("#alertActionBtn").textContent = t(confirm ? "alert.confirmBtn" : "alert.unsubBtn");
+  $("#alertActionBtn").hidden = false; $("#alertActionBtn").disabled = false;
+  alertStatus("#alertActionStatus", "");
+  $("#alertActionBtn").onclick = async () => {
+    $("#alertActionBtn").disabled = true;
+    try {
+      const res = await fetch(`${ALERTS_URL}/${link.action}`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: link.id, t: link.t }) });
+      if ([400, 404, 410].includes(res.status)) { alertStatus("#alertActionStatus", "alert.badLink", false); return; }
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      $("#alertActionBtn").hidden = true;
+      $("#alertActionText").textContent = "";
+      if (confirm) {
+        // show the confirmed filters on the board, so the visitor sees what they will get
+        history.replaceState(null, "", `?${data.filters || ""}`);
+        readURL(); $("#q").value = state.q; syncChecks(); update();
+        alertStatus("#alertActionStatus", "alert.confirmed", true, { f: alertSummary() });
+      } else alertStatus("#alertActionStatus", "alert.unsubbed", true);
+    } catch (err) {
+      alertStatus("#alertActionStatus", "alert.error", false);
+      $("#alertActionBtn").disabled = false;
+    }
+  };
+  $("#alertDlg").showModal();
+}
+function wireAlerts() {
+  if (!ALERTS_URL) return;
+  $("#alertBar").hidden = false;
+  $("#alertBtn").addEventListener("click", openAlert);
+  $("#alertForm").addEventListener("submit", sendAlert);
+  $("#alertEmail").addEventListener("input", () => { if ($("#alertStatus").classList.contains("bad")) alertStatus("#alertStatus", ""); });
+}
+
 let toastTimer;
 function toast(msg, action, onAction) {
   const box = $("#toast");
@@ -626,6 +738,8 @@ async function main() {
   readURL();
   wire();
   wireFeedback();
+  wireAlerts();
+  if (ALERT_LINK && ALERTS_URL) openAlertLink(ALERT_LINK);
   $("#resultCount").textContent = t("loading");
   try {
     const res = await fetch("data/jobs.json", { cache: "no-cache" });
@@ -637,7 +751,7 @@ async function main() {
     renderStats(data);
     update();
     // a shared link with filters goes straight to the results instead of the intro
-    if ([...new URLSearchParams(location.search).keys()].some((k) => k !== "lang")) {
+    if (!ALERT_LINK && [...new URLSearchParams(location.search).keys()].some((k) => k !== "lang")) {
       $("#stage").scrollIntoView({ behavior: "auto" });
     }
   } catch (e) {

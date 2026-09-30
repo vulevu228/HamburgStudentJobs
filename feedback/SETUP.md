@@ -118,3 +118,100 @@ py -3.11 test_local.py
 ```
 Full local run: `func start --port 7079` (uses `local.settings.json` with `FEEDBACK_STORE=memory`), then open
 the site on `http://localhost:8791` - the form posts to the local function automatically.
+
+---
+
+# Daily job alerts by email (added 30 Sep 2026)
+
+Visitors can click **"Email me new jobs like these"** above the results. They get a confirmation email
+(double opt-in, required in Germany) and, once confirmed, one email each morning with the day's new jobs that
+match the filters they had set. Unsubscribe = one click in every email (also the mail program's own button).
+
+The code is in this folder: `Alerts` (sign-up / confirm / unsubscribe, `POST /api/alerts/...`), `Digest`
+(timer, every 20 min 05:00-09:40 UTC: waits until the day's data is published, then sends) and `Purge`
+(now also deletes sign-ups that were never confirmed, after 7 days). Subscribers live in a new table `alerts`
+in the same storage account (`hsjfeedbackemir`).
+
+**Why a separate email sender:** the feedback copies use Azure's free `DoNotReply@...azurecomm.net` address.
+That address may only send about 10 emails an hour and lands in spam/Newsletters, so it can't carry the
+alerts. The alerts send from **alerts@hamburgstudentjobs.de**, which needs your domain verified with Azure (DNS records at INWX).
+
+Do the steps in order. **Tell Claude when step 6 works: only then the site change goes live.** Until then the live
+site has no alert button, so nothing is half-working in public.
+
+## 1. Email service + your domain (Germany data location)
+```powershell
+az communication email create --name hsj-email --resource-group rg-hsjfeedback --location global --data-location Germany
+```
+```powershell
+az communication email domain create --domain-name hamburgstudentjobs.de --email-service-name hsj-email --resource-group rg-hsjfeedback --location global --domain-management CustomerManaged --user-engmnt-tracking Disabled
+```
+(If `Germany` is refused as data location, use `Europe` in step 1 **and** step 4, and tell Claude: the privacy page says Germany.)
+
+## 2. DNS records at INWX
+Show the records Azure wants:
+```powershell
+az communication email domain show --domain-name hamburgstudentjobs.de --email-service-name hsj-email --resource-group rg-hsjfeedback --query verificationRecords -o json
+```
+You get 4 records: **Domain** (TXT), **SPF** (TXT), **DKIM** (CNAME), **DKIM2** (CNAME). Add each one at INWX ->
+Nameserver -> hamburgstudentjobs.de -> **Add record** (don't touch the existing A / AAAA / CNAME www / GitHub TXT records):
+- **Domain** and **SPF**: type TXT, name = empty (the domain itself), value = the `value` shown. Two separate TXT records.
+- **DKIM** and **DKIM2**: type CNAME, name = the `name` shown **without** `.hamburgstudentjobs.de` at the end
+  (e.g. `selector1-azurecomm-prod-net._domainkey`), value = the `value` shown.
+- Also add one DMARC record (big mail providers expect it): type TXT, name `_dmarc`, value `v=DMARC1; p=none;`
+
+Wait ~15 minutes, then start the checks (one line each):
+```powershell
+foreach ($t in "Domain","SPF","DKIM","DKIM2") { az communication email domain initiate-verification --domain-name hamburgstudentjobs.de --email-service-name hsj-email --resource-group rg-hsjfeedback --verification-type $t --output none }
+```
+Check after a few minutes; all four must say **Verified**:
+```powershell
+az communication email domain show --domain-name hamburgstudentjobs.de --email-service-name hsj-email --resource-group rg-hsjfeedback --query "verificationStates" -o table
+```
+(Portal alternative: Email Communication Services -> `hsj-email` -> Provision domains -> hamburgstudentjobs.de -> Configure.)
+
+## 3. The sender name alerts@hamburgstudentjobs.de
+```powershell
+az communication email domain sender-username create --domain-name hamburgstudentjobs.de --email-service-name hsj-email --resource-group rg-hsjfeedback --sender-username alerts --username alerts --display-name "Hamburg Student Jobs"
+```
+
+## 4. The sending resource, linked to the domain
+```powershell
+az communication create --name hsj-acs --resource-group rg-hsjfeedback --location global --data-location Germany
+```
+```powershell
+$dom = az communication email domain show --domain-name hamburgstudentjobs.de --email-service-name hsj-email --resource-group rg-hsjfeedback --query id -o tsv; az communication update --name hsj-acs --resource-group rg-hsjfeedback --linked-domains $dom --output none
+```
+
+## 5. Settings + upload the code
+The key goes from Azure straight into the app, never on screen:
+```powershell
+$acs = az communication list-key --name hsj-acs --resource-group rg-hsjfeedback --query primaryConnectionString -o tsv; az functionapp config appsettings set --name hsj-feedback-emir --resource-group rg-hsjfeedback --settings "ALERT_ACS_CONNECTION_STRING=$acs" "ALERT_SENDER=alerts@hamburgstudentjobs.de" "ALERT_API_URL=https://hsj-feedback-emir.azurewebsites.net/api/alerts" --output none; Remove-Variable acs
+```
+```powershell
+cd C:\Users\emira\Projects\GitHub-Projects\HamburgStudentJobs\feedback
+```
+```powershell
+func azure functionapp publish hsj-feedback-emir --python
+```
+The list at the end must now show **Alerts, Digest, Purge, Submit** (if not: the `syncfunctiontriggers` command from the feedback setup, step 4).
+
+## 6. Test with your own address
+```powershell
+Invoke-RestMethod -Method Post -Uri https://hsj-feedback-emir.azurewebsites.net/api/alerts/subscribe -Headers @{Origin="https://hamburgstudentjobs.de"} -ContentType "application/json" -Body '{"email":"emiravni@proton.me","filters":"type=Werkstudent","lang":"en","elapsed_ms":5000}'
+```
+It answers `ok : True` and a confirmation email from **alerts@hamburgstudentjobs.de** arrives. Check it's in the inbox,
+not spam. **Don't click the link yet:** the site part isn't live until Claude pushes it. Tell Claude, then click it.
+
+## Reading / managing subscribers
+Portal: Storage accounts -> `hsjfeedbackemir` -> Storage browser -> Tables -> `alerts`
+(`status` pending/active, `filters`, `lang`, `confirmed` = proof of consent, `last_sent`, `sent_count`).
+Deleting a row = unsubscribing that person. Digest runs show up in Application Insights as `digest: {...sent...}`.
+
+## Limits
+- One email per subscriber per day at most. No email on days without a matching new job.
+- Each run sends at most 25 digests (`DIGEST_MAX_PER_RUN`), 3 runs an hour, so about 75 an hour: under Azure's default
+  limit for a custom domain. With a few hundred subscribers, ask Azure for a higher sending quota (Portal support
+  request) and raise `DIGEST_MAX_PER_RUN`.
+- If the day's data isn't published by 09:40 UTC, no alerts go out that day.
+- Cost: Azure email is about $0.00025 per email, so 1,000 alerts = 25 cents.

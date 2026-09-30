@@ -35,13 +35,19 @@ class Ignored(Exception):
 # ---------------------------------------------------------------- storage backends
 class MemoryTables:
     def __init__(self):
-        self.rows = {"feedback": {}, "ratelimit": {}}
+        self.rows = {"feedback": {}, "ratelimit": {}, "alerts": {}}
 
     def get(self, table, pk, rk):
         return self.rows[table].get((pk, rk))
 
     def upsert(self, table, entity):
         self.rows[table][(entity["PartitionKey"], entity["RowKey"])] = dict(entity)
+
+    def query(self, table, pk):
+        return [dict(v) for k, v in self.rows[table].items() if k[0] == pk]
+
+    def delete(self, table, pk, rk):
+        self.rows[table].pop((pk, rk), None)
 
     def delete_where(self, table, older_than_pk):
         old = [k for k in self.rows[table] if k[0] < older_than_pk]
@@ -70,6 +76,12 @@ class AzureTables:
 
     def upsert(self, table, entity):
         self._t(table).upsert_entity(entity)
+
+    def query(self, table, pk):
+        return (dict(e) for e in self._t(table).query_entities("PartitionKey eq @pk", parameters={"pk": pk}))
+
+    def delete(self, table, pk, rk):
+        self._t(table).delete_entity(pk, rk)
 
     def delete_where(self, table, older_than_pk):
         t, n = self._t(table), 0
@@ -131,12 +143,13 @@ def clean(body):
     return row
 
 
-def check_rate(ip, now):
+def check_rate(ip, now, scope=""):
     day = now.strftime("%Y-%m-%d")
     salt = os.environ.get("RATE_SALT", "")
     if not salt and os.environ.get("FEEDBACK_STORE") != "memory":
         raise RuntimeError("RATE_SALT app setting is missing")
-    key = hashlib.sha256(f"{salt}|{day}|{ip}".encode()).hexdigest()[:40]
+    # feedback keeps its original key; other forms (scope "alert") count separately
+    key = hashlib.sha256(f"{salt}|{day}|{ip}{'|' + scope if scope else ''}".encode()).hexdigest()[:40]
     t = tables()
     row = t.get("ratelimit", day, key) or {"PartitionKey": day, "RowKey": key, "count": 0}
     if row["count"] >= MAX_PER_DAY:
