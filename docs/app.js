@@ -214,7 +214,7 @@ function renderFilters() {
   const nVisit = lastVisit ? countWhere("posted", newSinceVisit) : 0;
   $("#f-posted").replaceChildren(...POSTED.map((p) =>
     chip(t(`posted.${p}`), state.posted === p, () => { state.posted = p; update(); })),
-    nVisit || state.posted === "visit" ? chip(t("posted.visit"), state.posted === "visit", () => { state.posted = "visit"; update(); }, num(nVisit)) : null);
+    nVisit || state.posted === "visit" ? chip(t("posted.visit"), state.posted === "visit", () => { state.posted = "visit"; update(); }, num(nVisit)) : "");
 
   $("#mySkills").replaceChildren(...state.skills.map((s) =>
     el("button", { type: "button", class: "chip", title: t("remove.skill", { s }), onclick: () => {
@@ -406,7 +406,7 @@ let toastTimer;
 function toast(msg, action, onAction) {
   const box = $("#toast");
   box.replaceChildren(el("span", {}, msg),
-    action ? el("button", { type: "button", onclick: () => { box.hidden = true; onAction(); } }, action) : null);
+    action ? el("button", { type: "button", onclick: () => { box.hidden = true; onAction(); } }, action) : "");
   box.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { box.hidden = true; }, 6000);
@@ -457,7 +457,7 @@ function writeURL() {
 function readURL() {
   const p = new URLSearchParams(location.search);
   const list = (k) => (p.get(k) || "").split(",").filter(Boolean);
-  state.q = p.get("q") || "";
+  state.q = norm((p.get("q") || "").trim());
   state.english = p.get("en") === "1";
   state.levels = new Set(list("type").filter((l) => LEVELS.includes(l)));
   state.speak = new Set(list("speak").filter((s) => SPEAK.includes(s)));
