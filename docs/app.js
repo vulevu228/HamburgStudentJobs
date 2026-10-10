@@ -10,8 +10,10 @@ const POSTED = ["", "1", "7", "30"];
 const AREAS = ["hh", "around", "remote"];  // Hamburg itself / towns around it / remote jobs based elsewhere
 // feedback form -> Azure Function (feedback/ in the repo; only accepts posts from the live domain).
 // Local runs use `func start --port 7079` instead. Empty = form hidden.
-const FEEDBACK_URL = location.hostname === "localhost" ? "http://localhost:7079/api/feedback"
-  : "https://hsj-feedback-emir.azurewebsites.net/api/feedback";
+// Switched off 2026-10-10 (no messages or alert sign-ups yet; the Function App costs money while it runs).
+// To bring both back: start hsj-feedback-emir and restore
+//   location.hostname === "localhost" ? "http://localhost:7079/api/feedback" : "https://hsj-feedback-emir.azurewebsites.net/api/feedback"
+const FEEDBACK_URL = "";
 const FB_KINDS = ["question", "idea", "criticism", "bug", "job", "employer", "other"];
 // display names (data values stay English)
 const levelName = (l) => t(`level.${l}`);
