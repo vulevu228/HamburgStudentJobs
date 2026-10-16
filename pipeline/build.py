@@ -52,13 +52,17 @@ def collect(known):
                                                      budget, None if first else 3, 7 if first else 2)))
     else:
         print("  Adzuna           skipped (no ADZUNA_APP_ID / ADZUNA_APP_KEY)")
-    if key := (os.environ.get("JSEARCH_API_KEY") or "").strip():  # a pasted secret can carry spaces/newlines
-        # first run looks back a month; afterwards the last 3 days are enough
-        first = not any(r["source"] == "JSearch" for r in known.values())
+    key = (os.environ.get("JSEARCH_API_KEY") or "").strip()  # a pasted secret can carry spaces/newlines
+    if key and date.today().isoformat() < catalog.JSEARCH_PAUSED_UNTIL:
+        print(f"  JSearch          paused until {catalog.JSEARCH_PAUSED_UNTIL} (monthly quota)")
+    elif key:
+        # look back far enough to cover the days since the last JSearch fetch (first run / after a pause: a month)
+        last = max((r["first_seen"] for r in known.values() if r["source"] == "JSearch"), default=None)
+        gap = (date.today() - date.fromisoformat(last)).days if last else 99
         budget = sources.CallBudget(catalog.JSEARCH_DAILY_CALLS)
         BUDGETS["JSearch"] = budget
         tasks.append(("JSearch", sources.src_jsearch, (catalog.JSEARCH_QUERIES, catalog.CITY, key, budget,
-                                                       "month" if first else "3days")))
+                                                       "3days" if gap <= 2 else "week" if gap <= 6 else "month")))
     else:
         print("  JSearch          skipped (no JSEARCH_API_KEY)")
     for ats, slug, name in catalog.COMPANIES:
@@ -141,11 +145,16 @@ def main():
     ap.add_argument("--ai-scope", choices=["english", "all"], default="english",
                     help="english: only ads not already German-required (~2-3 a day); all: every new ad (~30 a day)")
     ap.add_argument("--no-ai", action="store_true")
+    ap.add_argument("--force", action="store_true", help="run even if jobs.json was already updated today")
     args = ap.parse_args()
     load_dotenv()
     today = date.today().isoformat()
 
     old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {"jobs": []}
+    # once a day: the watchdog's dispatch and GitHub's late cron run would otherwise both spend the API quotas
+    if not args.force and old.get("updated", "")[:10] == datetime.now(timezone.utc).date().isoformat():
+        print(f"jobs.json already updated today ({old['updated']}) - skipping (use --force to run anyway)")
+        return
     known = {j["id"]: j for j in old["jobs"]}
 
     print(f"{datetime.now():%Y-%m-%d %H:%M} collecting")

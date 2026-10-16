@@ -8,6 +8,10 @@ on:
       max_ai:
         description: "Max postings the AI step may describe in this run"
         default: "400"
+      force:
+        description: "Run even if the jobs were already updated today (spends API quota again)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -33,7 +37,7 @@ jobs:
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
           JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
-        run: python pipeline/build.py --max-ai "${{ github.event.inputs.max_ai || '400' }}"
+        run: python pipeline/build.py --max-ai "${{ github.event.inputs.max_ai || '400' }}" ${{ github.event.inputs.force == 'true' && '--force' || '' }}
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"

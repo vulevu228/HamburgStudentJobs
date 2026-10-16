@@ -65,6 +65,7 @@ JSEARCH_QUERIES = ["Werkstudent in Hamburg", "Praktikum in Hamburg", "working st
                    "internship in Hamburg", "Abschlussarbeit in Hamburg", "Studentenjob in Hamburg"]
 JSEARCH_DAILY_CALLS = 6
 JSEARCH_KEEP_DAYS = 30      # like Adzuna: not re-checked daily, so they expire by age
+JSEARCH_PAUSED_UNTIL = "2026-10-28"  # October quota used up early (two runs a day); resumes on this day
 
 LEVELS = ["Werkstudent", "Internship", "Thesis", "Student side job", "Junior / Trainee"]
 
