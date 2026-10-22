@@ -29,7 +29,7 @@ COMPANIES = [
     ("greenhouse", "mongodb", "MongoDB"),
     ("ashby", "statista", "Statista"),
     ("ashby", "enpal", "Enpal"),
-    ("ashby", "thoughtworks", "Thoughtworks"),
+    ("greenhouse", "thoughtworks", "Thoughtworks"),  # moved off Ashby (404 since 2026-10)
     ("lever", "netlight", "Netlight"),
     ("personio", "1komma5grad", "1KOMMA5°"),
     ("personio", "bigpoint", "Bigpoint"),

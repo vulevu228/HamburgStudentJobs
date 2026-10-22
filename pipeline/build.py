@@ -261,6 +261,19 @@ def main():
     # same for JSearch copies of ads we have from the employer, the job agency or Arbeitnow
     fuller = {norm(r["title"]) for r in jobs if r["source"] not in ("Adzuna", "JSearch") and len(norm(r["title"])) >= 28}
     jobs = [r for r in jobs if not (r["source"] in ("Adzuna", "JSearch") and norm(r["title"]) in fuller)]
+    # boards re-list the same ad under a new id every few days (Adzuna, JSearch) and the in-run duplicate check
+    # only sees one day: keep one record per company+title - the one seen last (its link is the live one) -
+    # with the earliest first_seen, so a re-listing is neither shown twice nor announced as new again
+    rank = {"Company Site": 0, "Arbeitnow": 1, "Arbeitsagentur": 2, "JSearch": 3}
+    groups = {}
+    for r in jobs:
+        groups.setdefault(company_key(r["company"]) + "|" + norm(r["title"]), []).append(r)
+    jobs = []
+    for group in groups.values():
+        keep = max(group, key=lambda r: (r["last_seen"], -rank.get(r["source"], 4), r["posted"]))
+        keep["first_seen"] = min(r["first_seen"] for r in group)
+        jobs.append(keep)
+    jobs.sort(key=lambda r: (r["posted"], r["id"]), reverse=True)
 
     if not raw:
         sys.exit("every source failed - keeping the previous jobs.json")
